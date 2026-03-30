@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats-bar">
+    <div class="stat-card">
+        <span class="stat-number" id="total-events">{{ stats.total_events|default(0) }}</span>
+        <span class="stat-label">Total Events</span>
+    </div>
+    <div class="stat-card alert-critical">
+        <span class="stat-number" id="critical-count">{{ stats.critical_alerts|default(0) }}</span>
+        <span class="stat-label">Critical</span>
+    </div>
+    <div class="stat-card alert-high">
+        <span class="stat-number" id="high-count">{{ stats.high_alerts|default(0) }}</span>
+        <span class="stat-label">High</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number" id="total-alerts">{{ stats.total_alerts|default(0) }}</span>
+        <span class="stat-label">Total Alerts</span>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-container">
+        <h3>Top Source IPs</h3>
+        <canvas id="topIpsChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <h3>Severity Breakdown</h3>
+        <canvas id="severityChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <h3>Event Types</h3>
+        <canvas id="eventTypeChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <h3>Events by Hour</h3>
+        <canvas id="timelineChart"></canvas>
+    </div>
+</div>
+
+<div class="alerts-section">
+    <h3>&#9888; Active Alerts</h3>
+    {% if alerts %}
+    <table class="alerts-table">
+        <thead>
+            <tr>
+                <th>Severity</th>
+                <th>Type</th>
+                <th>Source IP</th>
+                <th>Description</th>
+                <th>MITRE</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alert in alerts %}
+            <tr class="alert-row severity-{{ alert.severity }}">
+                <td><span class="badge badge-{{ alert.severity }}">{{ alert.severity|upper }}</span></td>
+                <td>{{ alert.type }}</td>
+                <td class="mono">{{ alert.source_ip|default('—') }}</td>
+                <td>{{ alert.description }}</td>
+                <td class="mono">{{ alert.mitre|default('—') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>No alerts yet. <a href="/upload">Upload a log file</a> to get started.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // pass stats from flask to chart.js
+    const stats = {{ stats|tojson if stats else '{}'|safe }};
+</script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

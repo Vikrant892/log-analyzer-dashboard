@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Upload Logs{% endblock %}
+
+{% block content %}
+<div class="upload-section">
+    <h2>Upload Log File</h2>
+    <p class="subtitle">Supports syslog, auth.log, and Apache/Nginx access logs</p>
+
+    {% if error %}
+    <div class="error-banner">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data" class="upload-form">
+        <div class="file-drop-zone" id="dropZone">
+            <div class="drop-icon">&#128196;</div>
+            <p>Drag & drop a log file here</p>
+            <p class="small">or click to browse</p>
+            <input type="file" name="logfile" id="fileInput" accept=".log,.txt,.sample">
+        </div>
+        <button type="submit" class="btn-submit" id="submitBtn" disabled>Analyze Logs</button>
+    </form>
+
+    <div class="supported-formats">
+        <h4>Supported Formats</h4>
+        <ul>
+            <li><strong>Syslog</strong> — RFC 3164 format</li>
+            <li><strong>auth.log</strong> — SSH logins, sudo commands</li>
+            <li><strong>Apache/Nginx</strong> — Combined access log format</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // basic file input UX — nothing fancy
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const submitBtn = document.getElementById('submitBtn');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            submitBtn.disabled = false;
+            dropZone.querySelector('p').textContent = fileInput.files[0].name;
+        }
+    });
+
+    // drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        fileInput.files = e.dataTransfer.files;
+        fileInput.dispatchEvent(new Event('change'));
+    });
+</script>
+{% endblock %}

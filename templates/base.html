@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Log Analyzer{% endblock %} — SIEM Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <nav class="topnav">
+        <div class="nav-brand">
+            <span class="logo">&#9763;</span> LOG ANALYZER
+        </div>
+        <div class="nav-links">
+            <a href="/" class="{% if request.path == '/' %}active{% endif %}">Dashboard</a>
+            <a href="/upload" class="{% if request.path == '/upload' %}active{% endif %}">Upload</a>
+            <a href="/alerts" class="{% if request.path == '/alerts' %}active{% endif %}">Alerts API</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>log-analyzer-dashboard &mdash; lightweight siem</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
