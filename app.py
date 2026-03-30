@@ -4,6 +4,7 @@ lightweight siem thing i built because splunk costs more than my rent
 """
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for
+from werkzeug.utils import secure_filename
 import os
 import json
 from analyzer.parser import parse_log_file, detect_log_type
@@ -11,6 +12,7 @@ from analyzer.detector import detect_threats
 from analyzer.stats import compute_stats
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', os.urandom(32).hex())
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16mb should be plenty
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -42,7 +44,7 @@ def upload():
         return render_template('upload.html', error='No file selected')
 
     # save it temporarily
-    filepath = os.path.join(UPLOAD_FOLDER, f.filename)
+    filepath = os.path.join(UPLOAD_FOLDER, secure_filename(f.filename))
     f.save(filepath)
 
     try:
@@ -85,7 +87,7 @@ def api_upload():
         return jsonify({'error': 'no file provided'}), 400
 
     f = request.files['logfile']
-    filepath = os.path.join(UPLOAD_FOLDER, f.filename)
+    filepath = os.path.join(UPLOAD_FOLDER, secure_filename(f.filename))
     f.save(filepath)
 
     try:

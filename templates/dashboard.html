@@ -76,7 +76,7 @@
 {% block scripts %}
 <script>
     // pass stats from flask to chart.js
-    const stats = {{ stats|tojson if stats else '{}'|safe }};
+    const stats = {{ stats|tojson if stats else '{}' }};
 </script>
 <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 {% endblock %}
