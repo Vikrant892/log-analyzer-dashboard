@@ -1,0 +1,20 @@
+Jan 15 08:23:01 webserver sshd[12041]: Failed password for invalid user admin from 192.168.1.100 port 54312
+Jan 15 08:23:03 webserver sshd[12041]: Failed password for invalid user admin from 192.168.1.100 port 54313
+Jan 15 08:23:05 webserver sshd[12042]: Failed password for invalid user root from 192.168.1.100 port 54314
+Jan 15 08:23:07 webserver sshd[12043]: Failed password for invalid user test from 192.168.1.100 port 54320
+Jan 15 08:23:09 webserver sshd[12044]: Failed password for invalid user admin from 192.168.1.100 port 54322
+Jan 15 08:23:11 webserver sshd[12045]: Failed password for invalid user ubuntu from 192.168.1.100 port 54330
+Jan 15 08:24:15 webserver sshd[12050]: Accepted password for vikrant from 10.0.0.5 port 49812
+Jan 15 08:25:02 webserver sudo[12055]: vikrant : TTY=pts/0 ; PWD=/home/vikrant ; USER=root ; COMMAND=/usr/bin/apt update
+Jan 15 09:10:33 webserver sshd[12101]: Failed password for root from 203.0.113.50 port 38421
+Jan 15 09:10:35 webserver sshd[12102]: Failed password for root from 203.0.113.50 port 38422
+Jan 15 09:10:37 webserver sshd[12103]: Failed password for invalid user postgres from 203.0.113.50 port 38430
+Jan 15 09:10:39 webserver sshd[12104]: Failed password for root from 203.0.113.50 port 38435
+Jan 15 09:10:41 webserver sshd[12105]: Failed password for invalid user oracle from 203.0.113.50 port 38440
+Jan 15 09:10:43 webserver sshd[12106]: Failed password for root from 203.0.113.50 port 38445
+Jan 15 09:12:00 webserver sshd[12110]: Accepted publickey for deploy from 10.0.0.12 port 50100
+Jan 15 09:15:22 webserver sudo[12115]: deploy : TTY=pts/1 ; PWD=/opt/app ; USER=root ; COMMAND=/usr/bin/systemctl restart nginx
+Jan 15 10:05:44 webserver sshd[12200]: Accepted password for vikrant from 10.0.0.5 port 49900
+Jan 15 11:30:18 webserver sshd[12300]: Failed password for invalid user guest from 198.51.100.23 port 60100
+Jan 15 11:30:20 webserver sshd[12301]: Failed password for invalid user user from 198.51.100.23 port 60105
+Jan 15 14:22:01 webserver sudo[12400]: vikrant : TTY=pts/0 ; PWD=/var/log ; USER=root ; COMMAND=/usr/bin/tail -f /var/log/syslog
