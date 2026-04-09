@@ -3,253 +3,354 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Log Analyzer Dashboard - Cybersecurity Log Intelligence</title>
+<title>Log Analyzer</title>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#c9d1d9;--text-dim:#8b949e;--error:#f85149;--success:#3fb950;--warn:#d2a8ff;--info:#58a6ff;--accent:#f78166}
-body{font-family:'Cascadia Code','Fira Code','SF Mono',monospace;background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.5;font-size:14px}
-a{color:var(--info);text-decoration:none}
+:root{--bg:#000;--card:rgba(28,28,30,0.8);--border:rgba(255,255,255,0.08);--text:#F5F5F7;--sub:#86868B;--accent:#2997FF;--radius:18px;--font:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',system-ui,sans-serif;--crit:#FF453A;--high:#FF9F0A;--med:#FFD60A;--low:#30D158;--info:#64D2FF}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;transition:opacity .3s ease}
+a:hover{opacity:.8}
+.container{max-width:1120px;margin:0 auto;padding:0 24px}
+section{padding:100px 0}
 
-.layout{display:grid;grid-template-columns:1fr;max-width:1200px;margin:0 auto;padding:16px;gap:16px}
+/* Nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(0,0,0,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:16px 0}
+nav .container{display:flex;justify-content:space-between;align-items:center}
+nav h1{font-size:18px;font-weight:600;letter-spacing:-0.02em}
+nav .links{display:flex;gap:24px;align-items:center}
+nav .links a{color:var(--sub);font-size:14px;transition:color .3s ease}
+nav .links a:hover{color:var(--text)}
+.pill{display:inline-block;padding:8px 22px;border-radius:100px;font-size:14px;font-weight:500;transition:all .3s ease;cursor:pointer;border:none}
+.pill-primary{background:var(--accent);color:#fff}
+.pill-primary:hover{background:#1a8aed;opacity:1}
+.pill-outline{border:1px solid rgba(255,255,255,0.2);color:var(--text);background:transparent}
+.pill-outline:hover{border-color:rgba(255,255,255,0.4);opacity:1}
 
-/* Header */
-.header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;flex-wrap:wrap;gap:12px}
-.header h1{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:10px}
-.header h1 span{color:var(--success)}
-.pulse{width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;animation:pulse 2s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(63,185,80,0.4)}50%{opacity:.7;box-shadow:0 0 0 6px rgba(63,185,80,0)}}
-.upload-area{padding:8px 16px;border:1px dashed var(--border);border-radius:8px;color:var(--text-dim);font-size:.8rem;cursor:help;position:relative}
-.upload-area:hover::after{content:'Demo Mode - Upload disabled';position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:6px;padding:6px 12px;background:#1f2937;border:1px solid var(--border);border-radius:6px;font-size:.75rem;white-space:nowrap;color:var(--warn);z-index:10}
+/* Hero */
+.hero{padding:160px 0 80px;text-align:center}
+.hero h2{font-size:clamp(40px,6vw,64px);font-weight:700;letter-spacing:-0.03em;line-height:1.1;margin-bottom:16px}
+.hero p{font-size:20px;color:var(--sub);max-width:540px;margin:0 auto 40px}
+.tech-stack{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.tech-tag{padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;color:var(--sub)}
 
-/* Terminal */
-.terminal{background:#010409;border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.terminal-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
-.terminal-dot{width:10px;height:10px;border-radius:50%}
-.terminal-bar span{font-size:.75rem;color:var(--text-dim)}
-.terminal-body{height:240px;overflow:hidden;padding:12px 16px;font-size:.8rem;line-height:1.8}
-.log-line{opacity:0;animation:fadeInLog .3s forwards;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@keyframes fadeInLog{to{opacity:1}}
-.log-info{color:var(--success)}
-.log-warn{color:var(--warn)}
-.log-error{color:var(--error)}
-.log-critical{color:#ff6b6b;font-weight:700;text-shadow:0 0 8px rgba(248,81,73,0.3)}
-.log-ts{color:var(--text-dim)}
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;padding:60px 0}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);backdrop-filter:blur(20px);padding:32px;text-align:center;transition:transform .3s ease}
+.stat-card:hover{transform:translateY(-4px)}
+.stat-card .value{font-size:40px;font-weight:700;letter-spacing:-0.03em}
+.stat-card .label{font-size:14px;color:var(--sub);margin-top:4px}
 
-/* Stats Grid */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;transition:border-color .2s}
-.stat-card:hover{border-color:var(--info)}
-.stat-number{font-size:2.2rem;font-weight:800;margin:4px 0}
-.stat-number.error-count{color:var(--error)}
-.stat-number.warn-count{color:var(--warn)}
-.stat-number.info-count{color:var(--success)}
-.stat-number.total-count{color:var(--info)}
-.stat-label{font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px}
+/* Section headings */
+.section-title{font-size:clamp(28px,4vw,40px);font-weight:700;letter-spacing:-0.02em;text-align:center;margin-bottom:16px}
+.section-sub{font-size:16px;color:var(--sub);text-align:center;margin-bottom:60px;max-width:520px;margin-left:auto;margin-right:auto}
 
-/* Counter Animation */
-.counter{font-variant-numeric:tabular-nums}
+/* Parser */
+.parser-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);backdrop-filter:blur(20px);padding:40px;max-width:900px;margin:0 auto}
+#log-input{width:100%;min-height:180px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:16px;color:var(--text);font-family:'SF Mono',Consolas,monospace;font-size:13px;resize:vertical;transition:border .3s ease;line-height:1.7}
+#log-input:focus{outline:none;border-color:var(--accent)}
+.parser-actions{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
 
-/* Bar Chart */
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px}
-.panel h3{font-size:.9rem;margin-bottom:20px;color:var(--text);display:flex;align-items:center;gap:8px}
-.panel h3::before{content:'';width:3px;height:16px;background:var(--info);border-radius:2px;display:inline-block}
-.bar-chart{display:flex;flex-direction:column;gap:10px}
-.bar-row{display:grid;grid-template-columns:140px 1fr 50px;align-items:center;gap:12px}
-.bar-name{font-size:.8rem;color:var(--text-dim);text-align:right}
-.bar-track{height:24px;background:rgba(255,255,255,0.03);border-radius:4px;overflow:hidden}
-.bar-fill{height:100%;border-radius:4px;transition:width 1.5s ease;width:0}
-.bar-value{font-size:.8rem;font-weight:600}
+/* Results grid */
+.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:40px}
+.result-panel{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.result-panel h4{font-size:14px;font-weight:600;margin-bottom:16px;text-transform:uppercase;letter-spacing:.04em;color:var(--sub)}
+.threat-item{padding:12px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start}
+.threat-item:last-child{border-bottom:none}
+.sev-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.sev-crit{background:var(--crit)}.sev-high{background:var(--high)}.sev-med{background:var(--med)}.sev-low{background:var(--low)}.sev-info{background:var(--info)}
+.threat-info .title{font-size:14px;font-weight:500}
+.threat-info .mitre{font-size:12px;color:var(--accent);margin-top:2px}
+.threat-info .detail{font-size:12px;color:var(--sub);margin-top:2px}
+
+/* Donut */
+.donut-wrap{display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap}
+.donut{width:140px;height:140px;border-radius:50%;position:relative}
+.donut-center{position:absolute;inset:30px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+.donut-legend{display:flex;flex-direction:column;gap:8px}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:13px}
+.legend-color{width:12px;height:12px;border-radius:3px;flex-shrink:0}
 
 /* Timeline */
-.timeline{position:relative;padding-left:24px}
-.timeline::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--border)}
-.tl-event{position:relative;margin-bottom:20px;padding-left:20px}
-.tl-event::before{content:'';position:absolute;left:-20px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid var(--border);background:var(--bg)}
-.tl-event.critical::before{border-color:var(--error);background:var(--error);box-shadow:0 0 8px rgba(248,81,73,0.4)}
-.tl-event.warning::before{border-color:var(--warn);background:var(--warn)}
-.tl-event.info::before{border-color:var(--success);background:var(--success)}
-.tl-time{font-size:.7rem;color:var(--text-dim)}
-.tl-desc{font-size:.85rem;margin-top:2px}
+.timeline{position:relative;padding-left:28px;max-height:400px;overflow-y:auto}
+.timeline::before{content:'';position:absolute;left:5px;top:0;bottom:0;width:2px;background:var(--border)}
+.tl-item{position:relative;padding:0 0 24px 20px}
+.tl-item::before{content:'';position:absolute;left:-24px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--border)}
+.tl-item.tl-crit::before{border-color:var(--crit);background:rgba(255,69,58,0.3)}
+.tl-item.tl-high::before{border-color:var(--high);background:rgba(255,159,10,0.3)}
+.tl-item.tl-med::before{border-color:var(--med);background:rgba(255,214,10,0.3)}
+.tl-item.tl-low::before{border-color:var(--low);background:rgba(48,209,88,0.3)}
+.tl-item .tl-time{font-size:12px;color:var(--sub)}
+.tl-item .tl-msg{font-size:14px;margin-top:2px}
+.tl-item .tl-sev{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
 
-/* IP Table */
-.ip-table{width:100%;border-collapse:collapse}
-.ip-table th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);padding:8px 12px;border-bottom:1px solid var(--border)}
-.ip-table td{padding:10px 12px;border-bottom:1px solid rgba(48,54,61,0.5);font-size:.85rem}
-.ip-table tr:hover td{background:rgba(255,255,255,0.02)}
-.threat-high{color:var(--error);font-weight:600}
-.threat-med{color:var(--accent);font-weight:600}
+#results-section{display:none}
 
-/* MITRE Grid */
-.mitre-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
-.mitre-cell{padding:10px 8px;border-radius:6px;font-size:.7rem;text-align:center;border:1px solid var(--border);background:rgba(255,255,255,0.01);transition:all .2s;cursor:default}
-.mitre-cell.detected{background:rgba(248,81,73,0.1);border-color:rgba(248,81,73,0.3);color:var(--error)}
-.mitre-cell.detected:hover{background:rgba(248,81,73,0.2);transform:scale(1.05)}
+/* Footer */
+footer{border-top:1px solid var(--border);padding:40px 0;text-align:center}
+footer p{color:var(--sub);font-size:14px}
+footer a{color:var(--accent)}
 
-/* Two col */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:768px){.two-col{grid-template-columns:1fr}}
-
-/* Detection banner */
-.detection-banner{background:linear-gradient(135deg,rgba(248,81,73,0.08),rgba(215,168,255,0.05));border:1px solid rgba(248,81,73,0.2);border-radius:12px;padding:20px 24px;text-align:center;font-size:1rem}
-.detection-banner strong{color:var(--error);font-size:1.4rem}
-
-footer{padding:32px 16px;text-align:center;color:var(--text-dim);font-size:.8rem;border-top:1px solid var(--border);margin-top:16px}
-footer a{color:var(--info)}
-
-.fade-in{opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s}
-.fade-in.visible{opacity:1;transform:translateY(0)}
+@media(max-width:680px){
+  nav .links{gap:14px}
+  .results-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
 
-<div class="layout">
-  <div class="header">
-    <h1><span class="pulse"></span> <span>Log Analyzer</span> Dashboard</h1>
-    <div class="upload-area">&#128193; Drop log file here</div>
-  </div>
-
-  <div class="detection-banner fade-in">
-    Detected: <strong><span class="counter" data-target="47">0</span></strong> brute force attempts, <strong><span class="counter" data-target="12">0</span></strong> port scans, <strong><span class="counter" data-target="8">0</span></strong> privilege escalations
-  </div>
-
-  <div class="terminal fade-in">
-    <div class="terminal-bar">
-      <div class="terminal-dot" style="background:#f85149"></div>
-      <div class="terminal-dot" style="background:#d29922"></div>
-      <div class="terminal-dot" style="background:#3fb950"></div>
-      <span>auth.log - live tail</span>
+<nav>
+  <div class="container">
+    <h1>Log Analyzer</h1>
+    <div class="links">
+      <a href="#parser">Parser</a>
+      <a href="#results-section">Results</a>
+      <a href="https://github.com/Vikrant892/log-analyzer-dashboard" target="_blank" class="pill pill-outline">GitHub</a>
     </div>
-    <div class="terminal-body" id="terminalBody"></div>
   </div>
+</nav>
 
-  <div class="stats-grid fade-in">
-    <div class="stat-card"><div class="stat-number total-count counter" data-target="12847">0</div><div class="stat-label">Total Events</div></div>
-    <div class="stat-card"><div class="stat-number error-count counter" data-target="342">0</div><div class="stat-label">Errors</div></div>
-    <div class="stat-card"><div class="stat-number warn-count counter" data-target="891">0</div><div class="stat-label">Warnings</div></div>
-    <div class="stat-card"><div class="stat-number info-count counter" data-target="11614">0</div><div class="stat-label">Info</div></div>
-  </div>
-
-  <div class="two-col fade-in">
-    <div class="panel">
-      <h3>Attack Types Detected</h3>
-      <div class="bar-chart" id="barChart"></div>
+<section class="hero">
+  <div class="container">
+    <h2>Cybersecurity Log Intelligence</h2>
+    <p>Parse, categorize, and detect threats in system logs with MITRE ATT&CK technique mapping.</p>
+    <div class="tech-stack">
+      <span class="tech-tag">Python</span>
+      <span class="tech-tag">Flask</span>
+      <span class="tech-tag">Chart.js</span>
+      <span class="tech-tag">Regex</span>
     </div>
-    <div class="panel">
-      <h3>Event Timeline</h3>
-      <div class="timeline">
-        <div class="tl-event critical"><div class="tl-time">03:14:22 UTC</div><div class="tl-desc">Brute force detected from 192.168.1.105 (47 attempts)</div></div>
-        <div class="tl-event critical"><div class="tl-time">03:18:47 UTC</div><div class="tl-desc">Privilege escalation attempt - sudo exploit CVE-2023-22809</div></div>
-        <div class="tl-event warning"><div class="tl-time">03:22:15 UTC</div><div class="tl-desc">Port scan from 10.0.0.88 - 1024 ports in 12s</div></div>
-        <div class="tl-event info"><div class="tl-time">03:25:01 UTC</div><div class="tl-desc">Firewall rule updated - blocked 192.168.1.105</div></div>
-        <div class="tl-event warning"><div class="tl-time">03:31:33 UTC</div><div class="tl-desc">Suspicious outbound to 45.33.32.156:4444 (reverse shell?)</div></div>
-        <div class="tl-event info"><div class="tl-time">03:35:00 UTC</div><div class="tl-desc">Automated containment triggered - host isolated</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="stats">
+      <div class="stat-card"><div class="value" id="stat-parsed">0</div><div class="label">Logs Parsed</div></div>
+      <div class="stat-card"><div class="value" id="stat-threats">0</div><div class="label">Threats Detected</div></div>
+      <div class="stat-card"><div class="value" id="stat-types">0</div><div class="label">Alert Types</div></div>
+      <div class="stat-card"><div class="value" id="stat-mitre">0</div><div class="label">MITRE Techniques</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="parser">
+  <div class="container">
+    <h3 class="section-title">Log Parser</h3>
+    <p class="section-sub">Paste syslog or auth.log entries below and click Analyze to detect threats and categorize events.</p>
+    <div class="parser-card">
+      <textarea id="log-input" spellcheck="false">Mar 15 08:12:01 server sshd[4821]: Failed password for root from 192.168.1.105 port 22 ssh2
+Mar 15 08:12:03 server sshd[4821]: Failed password for root from 192.168.1.105 port 22 ssh2
+Mar 15 08:12:05 server sshd[4821]: Failed password for root from 192.168.1.105 port 22 ssh2
+Mar 15 08:12:07 server sshd[4821]: Failed password for admin from 192.168.1.105 port 22 ssh2
+Mar 15 08:12:09 server sshd[4821]: Failed password for admin from 192.168.1.105 port 22 ssh2
+Mar 15 08:14:22 server kernel: TCP connection attempt to port 21 from 10.0.0.50
+Mar 15 08:14:22 server kernel: TCP connection attempt to port 22 from 10.0.0.50
+Mar 15 08:14:23 server kernel: TCP connection attempt to port 23 from 10.0.0.50
+Mar 15 08:14:23 server kernel: TCP connection attempt to port 25 from 10.0.0.50
+Mar 15 08:14:24 server kernel: TCP connection attempt to port 80 from 10.0.0.50
+Mar 15 08:15:30 server sshd[4900]: Accepted publickey for deploy from 172.16.0.10 port 22 ssh2
+Mar 15 08:16:45 server sudo: admin : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/bin/bash
+Mar 15 08:18:01 server CRON[5010]: (root) CMD (/usr/bin/backup.sh)</textarea>
+      <div class="parser-actions">
+        <button class="pill pill-primary" onclick="analyzeLogs()">Analyze</button>
+        <button class="pill pill-outline" onclick="clearResults()">Clear</button>
       </div>
     </div>
   </div>
+</section>
 
-  <div class="two-col fade-in">
-    <div class="panel">
-      <h3>Top Source IPs</h3>
-      <table class="ip-table">
-        <thead><tr><th>IP Address</th><th>Events</th><th>Threat</th></tr></thead>
-        <tbody>
-          <tr><td>192.168.1.105</td><td>342</td><td class="threat-high">HIGH</td></tr>
-          <tr><td>10.0.0.88</td><td>189</td><td class="threat-high">HIGH</td></tr>
-          <tr><td>172.16.0.55</td><td>78</td><td class="threat-med">MEDIUM</td></tr>
-          <tr><td>45.33.32.156</td><td>45</td><td class="threat-high">HIGH</td></tr>
-          <tr><td>192.168.2.10</td><td>23</td><td class="threat-med">MEDIUM</td></tr>
-        </tbody>
-      </table>
+<section id="results-section">
+  <div class="container">
+    <h3 class="section-title">Analysis Results</h3>
+    <div class="results-grid">
+      <div class="result-panel">
+        <h4>Threat Detection</h4>
+        <div id="threats-list"></div>
+      </div>
+      <div class="result-panel">
+        <h4>Log Type Distribution</h4>
+        <div class="donut-wrap">
+          <div class="donut" id="donut"></div>
+          <div class="donut-legend" id="donut-legend"></div>
+        </div>
+      </div>
     </div>
-    <div class="panel">
-      <h3>MITRE ATT&CK Mapping</h3>
-      <div class="mitre-grid" id="mitreGrid"></div>
+    <div class="result-panel" style="margin-top:24px">
+      <h4>Alert Timeline</h4>
+      <div class="timeline" id="timeline"></div>
     </div>
   </div>
-</div>
+</section>
 
 <footer>
-  <p>Built by <strong>Vikrant Sharma</strong> &middot; <a href="https://github.com/Vikrant892/log-analyzer-dashboard" target="_blank">View on GitHub</a></p>
+  <div class="container">
+    <p>Built by Vikrant Sharma &middot; <a href="https://github.com/Vikrant892/log-analyzer-dashboard" target="_blank">View on GitHub</a></p>
+  </div>
 </footer>
 
 <script>
-// Log lines
-const logTemplates=[
-  {level:'info',msg:'sshd[{pid}]: Accepted publickey for admin from 10.0.0.1 port {port}'},
-  {level:'warn',msg:'sshd[{pid}]: Failed password for root from 192.168.1.105 port {port}'},
-  {level:'error',msg:'sshd[{pid}]: maximum authentication attempts exceeded for root from 192.168.1.105'},
-  {level:'info',msg:'kernel: [UFW BLOCK] IN=eth0 SRC=10.0.0.88 DST=10.0.0.1 PROTO=TCP DPT={port}'},
-  {level:'warn',msg:'sudo: pam_unix(sudo:auth): auth failure; user=www-data'},
-  {level:'critical',msg:'CRITICAL: Possible privilege escalation detected - CVE-2023-22809'},
-  {level:'info',msg:'systemd[1]: Started Session {pid} of user admin'},
-  {level:'error',msg:'sshd[{pid}]: Invalid user postgres from 172.16.0.55 port {port}'},
-  {level:'warn',msg:'kernel: TCP: request_sock_TCP: Possible SYN flooding on port {port}'},
-  {level:'info',msg:'auditd[{pid}]: SYSCALL arch=c000003e syscall=59 success=yes'},
-  {level:'critical',msg:'ALERT: Outbound connection to known C2 server 45.33.32.156:4444'},
-  {level:'error',msg:'pam_unix(sshd:auth): check pass; user unknown'},
-  {level:'warn',msg:'sshd[{pid}]: Disconnecting: Too many authentication failures for root'},
-];
-function rng(a,b){return Math.floor(Math.random()*(b-a+1))+a}
-function genTimestamp(){return`2024-03-${rng(15,28)} ${String(rng(0,23)).padStart(2,'0')}:${String(rng(0,59)).padStart(2,'0')}:${String(rng(0,59)).padStart(2,'0')}`}
-function addLogLine(){
-  const t=logTemplates[rng(0,logTemplates.length-1)];
-  const msg=t.msg.replace(/\{pid\}/g,rng(1000,9999)).replace(/\{port\}/g,rng(1024,65535));
-  const body=document.getElementById('terminalBody');
-  const line=document.createElement('div');
-  line.className='log-line';
-  line.innerHTML=`<span class="log-ts">${genTimestamp()}</span> <span class="log-${t.level}">[${t.level.toUpperCase()}]</span> ${msg}`;
-  body.appendChild(line);
-  if(body.children.length>50)body.removeChild(body.firstChild);
-  body.scrollTop=body.scrollHeight;
-}
-setInterval(addLogLine,600);
-for(let i=0;i<12;i++)addLogLine();
+var MITRE = {
+  bruteForce: { id: 'T1110', name: 'Brute Force', tactic: 'Credential Access' },
+  portScan: { id: 'T1046', name: 'Network Service Discovery', tactic: 'Discovery' },
+  privEsc: { id: 'T1548', name: 'Abuse Elevation Control', tactic: 'Privilege Escalation' }
+};
 
-// Bar chart
-const attacks=[
-  {name:'Brute Force',value:47,color:'var(--error)'},
-  {name:'Port Scan',value:12,color:'var(--warn)'},
-  {name:'Privilege Escalation',value:8,color:'var(--accent)'},
-  {name:'C2 Communication',value:5,color:'#f85149'},
-  {name:'Data Exfiltration',value:3,color:'var(--info)'},
-  {name:'Web Shell',value:2,color:'var(--success)'},
-];
-const maxVal=Math.max(...attacks.map(a=>a.value));
-const bc=document.getElementById('barChart');
-attacks.forEach(a=>{
-  const pct=(a.value/maxVal)*100;
-  bc.innerHTML+=`<div class="bar-row"><div class="bar-name">${a.name}</div><div class="bar-track"><div class="bar-fill" style="background:${a.color}" data-width="${pct}%"></div></div><div class="bar-value" style="color:${a.color}">${a.value}</div></div>`;
-});
+function parseLogs(raw) {
+  var lines = raw.trim().split('\n').filter(function(l) { return l.trim(); });
+  var results = { lines: [], types: {}, threats: [], timeline: [] };
+  var failedLogins = {};
+  var portScans = {};
 
-// MITRE grid
-const techniques=[
-  {id:'T1110',name:'Brute Force',detected:true},{id:'T1046',name:'Network Scan',detected:true},
-  {id:'T1548',name:'Abuse Elevation',detected:true},{id:'T1071',name:'App Layer Proto',detected:true},
-  {id:'T1059',name:'Command Script',detected:false},{id:'T1053',name:'Scheduled Task',detected:false},
-  {id:'T1021',name:'Remote Services',detected:true},{id:'T1078',name:'Valid Accounts',detected:false},
-  {id:'T1095',name:'Non-App Proto',detected:true},{id:'T1190',name:'Exploit Public',detected:false},
-  {id:'T1136',name:'Create Account',detected:false},{id:'T1027',name:'Obfuscation',detected:false},
-  {id:'T1570',name:'Lateral Move',detected:true},{id:'T1567',name:'Exfil Over Web',detected:true},
-  {id:'T1105',name:'Ingress Tool',detected:false},{id:'T1047',name:'WMI',detected:false},
-];
-const mg=document.getElementById('mitreGrid');
-techniques.forEach(t=>{mg.innerHTML+=`<div class="mitre-cell ${t.detected?'detected':''}">${t.id}<br>${t.name}</div>`});
+  lines.forEach(function(line, i) {
+    var parsed = { raw: line, index: i };
 
-// Counters
-const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{
-  if(!e.isIntersecting)return;
-  e.target.classList.add('visible');
-  e.target.querySelectorAll('.counter').forEach(c=>{
-    const target=parseInt(c.dataset.target);
-    let current=0;
-    const step=Math.ceil(target/60);
-    const timer=setInterval(()=>{current+=step;if(current>=target){current=target;clearInterval(timer)}c.textContent=current.toLocaleString()},20);
+    if (/Failed password/i.test(line)) {
+      parsed.type = 'auth_failure';
+      var ipMatch = line.match(/from\s+([\d.]+)/);
+      var userMatch = line.match(/for\s+(\w+)/);
+      if (ipMatch) {
+        var ip = ipMatch[1];
+        failedLogins[ip] = (failedLogins[ip] || 0) + 1;
+        parsed.ip = ip;
+        parsed.user = userMatch ? userMatch[1] : 'unknown';
+      }
+    } else if (/Accepted/i.test(line)) {
+      parsed.type = 'auth_success';
+    } else if (/connection attempt to port/i.test(line)) {
+      parsed.type = 'network';
+      var ipM = line.match(/from\s+([\d.]+)/);
+      var portM = line.match(/port\s+(\d+)/);
+      if (ipM) {
+        var scanIp = ipM[1];
+        if (!portScans[scanIp]) portScans[scanIp] = [];
+        portScans[scanIp].push(parseInt(portM[1]));
+        parsed.ip = scanIp;
+      }
+    } else if (/sudo/i.test(line)) {
+      parsed.type = 'privilege';
+    } else if (/CRON/i.test(line)) {
+      parsed.type = 'scheduled';
+    } else {
+      parsed.type = 'system';
+    }
+
+    results.types[parsed.type] = (results.types[parsed.type] || 0) + 1;
+    results.lines.push(parsed);
   });
-})},{threshold:0.1});
-document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
 
-// Animate bars after load
-setTimeout(()=>{document.querySelectorAll('.bar-fill').forEach(b=>{b.style.width=b.dataset.width})},300);
+  Object.keys(failedLogins).forEach(function(ip) {
+    var count = failedLogins[ip];
+    if (count >= 3) {
+      results.threats.push({
+        severity: 'critical', type: 'Brute Force Attempt',
+        detail: count + ' failed logins from ' + ip,
+        mitre: MITRE.bruteForce
+      });
+      results.timeline.push({ time: 'Detected', msg: 'Brute force from ' + ip + ' (' + count + ' attempts)', sev: 'crit' });
+    }
+  });
+
+  Object.keys(portScans).forEach(function(ip) {
+    var ports = portScans[ip];
+    if (ports.length >= 3) {
+      var sorted = ports.sort(function(a, b) { return a - b; });
+      results.threats.push({
+        severity: 'high', type: 'Port Scan Detected',
+        detail: ip + ' scanned ports ' + sorted.join(', '),
+        mitre: MITRE.portScan
+      });
+      results.timeline.push({ time: 'Detected', msg: 'Port scan from ' + ip + ' on ' + ports.length + ' ports', sev: 'high' });
+    }
+  });
+
+  results.lines.forEach(function(l) {
+    if (l.type === 'privilege') {
+      results.threats.push({
+        severity: 'medium', type: 'Privilege Escalation',
+        detail: 'sudo command executed to gain root access',
+        mitre: MITRE.privEsc
+      });
+      results.timeline.push({ time: 'Detected', msg: 'Privilege escalation via sudo', sev: 'med' });
+    }
+    if (l.type === 'auth_success') {
+      results.timeline.push({ time: 'Info', msg: 'Successful authentication event', sev: 'low' });
+    }
+  });
+
+  return results;
+}
+
+function renderDonut(types) {
+  var colors = { auth_failure: '#FF453A', auth_success: '#30D158', network: '#2997FF', privilege: '#FF9F0A', scheduled: '#64D2FF', system: '#86868B' };
+  var labels = { auth_failure: 'Auth Failure', auth_success: 'Auth Success', network: 'Network', privilege: 'Privilege', scheduled: 'Scheduled', system: 'System' };
+  var total = 0;
+  Object.keys(types).forEach(function(k) { total += types[k]; });
+  var gradient = '';
+  var offset = 0;
+  var legend = document.getElementById('donut-legend');
+  legend.innerHTML = '';
+
+  Object.keys(types).forEach(function(type) {
+    var count = types[type];
+    var pct = (count / total) * 100;
+    var color = colors[type] || '#86868B';
+    gradient += color + ' ' + offset + '% ' + (offset + pct) + '%, ';
+    offset += pct;
+    legend.innerHTML += '<div class="legend-item"><div class="legend-color" style="background:' + color + '"></div>' + (labels[type] || type) + ' (' + count + ')</div>';
+  });
+
+  var donut = document.getElementById('donut');
+  donut.style.background = 'conic-gradient(' + gradient.slice(0, -2) + ')';
+  donut.innerHTML = '<div class="donut-center">' + total + ' logs</div>';
+}
+
+function analyzeLogs() {
+  var raw = document.getElementById('log-input').value;
+  if (!raw.trim()) return;
+
+  var results = parseLogs(raw);
+
+  document.getElementById('stat-parsed').textContent = results.lines.length;
+  document.getElementById('stat-threats').textContent = results.threats.length;
+
+  var uniqueTypes = {};
+  results.threats.forEach(function(t) { uniqueTypes[t.type] = true; });
+  document.getElementById('stat-types').textContent = Object.keys(uniqueTypes).length;
+
+  var uniqueMitre = {};
+  results.threats.forEach(function(t) { if (t.mitre) uniqueMitre[t.mitre.id] = true; });
+  document.getElementById('stat-mitre').textContent = Object.keys(uniqueMitre).length;
+
+  var threatsList = document.getElementById('threats-list');
+  if (results.threats.length === 0) {
+    threatsList.innerHTML = '<p style="color:var(--sub);font-size:14px">No threats detected.</p>';
+  } else {
+    threatsList.innerHTML = results.threats.map(function(t) {
+      var sevClass = t.severity === 'critical' ? 'crit' : t.severity === 'high' ? 'high' : t.severity === 'medium' ? 'med' : 'low';
+      return '<div class="threat-item"><div class="sev-dot sev-' + sevClass + '"></div><div class="threat-info"><div class="title">' + t.type + '</div>' + (t.mitre ? '<div class="mitre">' + t.mitre.id + ' - ' + t.mitre.name + ' (' + t.mitre.tactic + ')</div>' : '') + '<div class="detail">' + t.detail + '</div></div></div>';
+    }).join('');
+  }
+
+  renderDonut(results.types);
+
+  var timeline = document.getElementById('timeline');
+  timeline.innerHTML = results.timeline.map(function(t) {
+    var colorVar = t.sev === 'crit' ? '--crit' : t.sev === 'high' ? '--high' : t.sev === 'med' ? '--med' : '--low';
+    return '<div class="tl-item tl-' + t.sev + '"><div class="tl-time">' + t.time + '</div><div class="tl-msg">' + t.msg + '</div><div class="tl-sev" style="color:var(' + colorVar + ')">' + t.sev.toUpperCase() + '</div></div>';
+  }).join('');
+
+  document.getElementById('results-section').style.display = 'block';
+  document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function clearResults() {
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('stat-parsed').textContent = '0';
+  document.getElementById('stat-threats').textContent = '0';
+  document.getElementById('stat-types').textContent = '0';
+  document.getElementById('stat-mitre').textContent = '0';
+}
 </script>
 </body>
 </html>
