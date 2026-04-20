@@ -1,356 +1,168 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Log Analyzer</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>logparse — tail / grep log intel</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#000;--card:rgba(28,28,30,0.8);--border:rgba(255,255,255,0.08);--text:#F5F5F7;--sub:#86868B;--accent:#2997FF;--radius:18px;--font:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',system-ui,sans-serif;--crit:#FF453A;--high:#FF9F0A;--med:#FFD60A;--low:#30D158;--info:#64D2FF}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.6;-webkit-font-smoothing:antialiased}
-a{color:var(--accent);text-decoration:none;transition:opacity .3s ease}
-a:hover{opacity:.8}
-.container{max-width:1120px;margin:0 auto;padding:0 24px}
-section{padding:100px 0}
-
-/* Nav */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(0,0,0,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:16px 0}
-nav .container{display:flex;justify-content:space-between;align-items:center}
-nav h1{font-size:18px;font-weight:600;letter-spacing:-0.02em}
-nav .links{display:flex;gap:24px;align-items:center}
-nav .links a{color:var(--sub);font-size:14px;transition:color .3s ease}
-nav .links a:hover{color:var(--text)}
-.pill{display:inline-block;padding:8px 22px;border-radius:100px;font-size:14px;font-weight:500;transition:all .3s ease;cursor:pointer;border:none}
-.pill-primary{background:var(--accent);color:#fff}
-.pill-primary:hover{background:#1a8aed;opacity:1}
-.pill-outline{border:1px solid rgba(255,255,255,0.2);color:var(--text);background:transparent}
-.pill-outline:hover{border-color:rgba(255,255,255,0.4);opacity:1}
-
-/* Hero */
-.hero{padding:160px 0 80px;text-align:center}
-.hero h2{font-size:clamp(40px,6vw,64px);font-weight:700;letter-spacing:-0.03em;line-height:1.1;margin-bottom:16px}
-.hero p{font-size:20px;color:var(--sub);max-width:540px;margin:0 auto 40px}
-.tech-stack{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.tech-tag{padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;color:var(--sub)}
-
-/* Stats */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;padding:60px 0}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);backdrop-filter:blur(20px);padding:32px;text-align:center;transition:transform .3s ease}
-.stat-card:hover{transform:translateY(-4px)}
-.stat-card .value{font-size:40px;font-weight:700;letter-spacing:-0.03em}
-.stat-card .label{font-size:14px;color:var(--sub);margin-top:4px}
-
-/* Section headings */
-.section-title{font-size:clamp(28px,4vw,40px);font-weight:700;letter-spacing:-0.02em;text-align:center;margin-bottom:16px}
-.section-sub{font-size:16px;color:var(--sub);text-align:center;margin-bottom:60px;max-width:520px;margin-left:auto;margin-right:auto}
-
-/* Parser */
-.parser-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);backdrop-filter:blur(20px);padding:40px;max-width:900px;margin:0 auto}
-#log-input{width:100%;min-height:180px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:16px;color:var(--text);font-family:'SF Mono',Consolas,monospace;font-size:13px;resize:vertical;transition:border .3s ease;line-height:1.7}
-#log-input:focus{outline:none;border-color:var(--accent)}
-.parser-actions{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
-
-/* Results grid */
-.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:40px}
-.result-panel{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
-.result-panel h4{font-size:14px;font-weight:600;margin-bottom:16px;text-transform:uppercase;letter-spacing:.04em;color:var(--sub)}
-.threat-item{padding:12px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start}
-.threat-item:last-child{border-bottom:none}
-.sev-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
-.sev-crit{background:var(--crit)}.sev-high{background:var(--high)}.sev-med{background:var(--med)}.sev-low{background:var(--low)}.sev-info{background:var(--info)}
-.threat-info .title{font-size:14px;font-weight:500}
-.threat-info .mitre{font-size:12px;color:var(--accent);margin-top:2px}
-.threat-info .detail{font-size:12px;color:var(--sub);margin-top:2px}
-
-/* Donut */
-.donut-wrap{display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap}
-.donut{width:140px;height:140px;border-radius:50%;position:relative}
-.donut-center{position:absolute;inset:30px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
-.donut-legend{display:flex;flex-direction:column;gap:8px}
-.legend-item{display:flex;align-items:center;gap:8px;font-size:13px}
-.legend-color{width:12px;height:12px;border-radius:3px;flex-shrink:0}
-
-/* Timeline */
-.timeline{position:relative;padding-left:28px;max-height:400px;overflow-y:auto}
-.timeline::before{content:'';position:absolute;left:5px;top:0;bottom:0;width:2px;background:var(--border)}
-.tl-item{position:relative;padding:0 0 24px 20px}
-.tl-item::before{content:'';position:absolute;left:-24px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--border)}
-.tl-item.tl-crit::before{border-color:var(--crit);background:rgba(255,69,58,0.3)}
-.tl-item.tl-high::before{border-color:var(--high);background:rgba(255,159,10,0.3)}
-.tl-item.tl-med::before{border-color:var(--med);background:rgba(255,214,10,0.3)}
-.tl-item.tl-low::before{border-color:var(--low);background:rgba(48,209,88,0.3)}
-.tl-item .tl-time{font-size:12px;color:var(--sub)}
-.tl-item .tl-msg{font-size:14px;margin-top:2px}
-.tl-item .tl-sev{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
-
-#results-section{display:none}
-
-/* Footer */
-footer{border-top:1px solid var(--border);padding:40px 0;text-align:center}
-footer p{color:var(--sub);font-size:14px}
-footer a{color:var(--accent)}
-
-@media(max-width:680px){
-  nav .links{gap:14px}
-  .results-grid{grid-template-columns:1fr}
-}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#1e1e1e;color:#d4d4d4;font-family:'IBM Plex Mono',Consolas,ui-monospace,monospace;font-size:13px;line-height:1.5;min-height:100vh}
+a{color:#569cd6;text-decoration:none}a:hover{text-decoration:underline}
+.page{max-width:1060px;margin:0 auto;padding:20px 22px 40px}
+.cmd{color:#858585;margin-bottom:16px;font-size:12.5px}
+.cmd b{color:#d4d4d4;font-weight:500}
+.split{display:grid;grid-template-rows:65% 35%;gap:14px;height:calc(100vh - 90px);min-height:460px}
+.pane{border:1px solid #333;display:flex;flex-direction:column;overflow:hidden}
+.pane h5{background:#2a2a2a;border-bottom:1px solid #333;padding:5px 10px;font-size:11.5px;color:#858585;font-weight:500;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between}
+.pane h5 .ctrl{color:#569cd6;cursor:pointer}
+textarea,.logs{flex:1;background:transparent;border:0;color:#d4d4d4;font:inherit;padding:10px 14px;resize:none;outline:none;overflow:auto;white-space:pre;line-height:1.55}
+textarea:focus{background:#252525}
+.threats{flex:1;overflow:auto;padding:10px 14px}
+.tr{padding:3px 0;cursor:pointer;border-left:2px solid transparent;padding-left:8px;margin-left:-10px}
+.tr:hover{background:#2a2a2a}
+.tr .ts{color:#858585;margin-right:10px}
+.tr .ty{font-weight:500;margin-right:10px;display:inline-block;min-width:130px}
+.tr .det{color:#858585}
+.tr .att{color:#dcdcaa;margin-left:10px}
+.tr.sev-hi{border-left-color:#f48771}.tr.sev-hi .ty{color:#f48771}
+.tr.sev-md{border-left-color:#dcdcaa}.tr.sev-md .ty{color:#dcdcaa}
+.tr.sev-lo{border-left-color:#569cd6}.tr.sev-lo .ty{color:#569cd6}
+.btn{background:transparent;border:1px solid #3c3c3c;color:#d4d4d4;font:inherit;padding:4px 12px;cursor:pointer;border-radius:0}
+.btn:hover{border-color:#569cd6;color:#569cd6}
+.toolbar{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+.toolbar .meta{color:#858585;margin-left:auto;font-size:12px}
+.sb{margin-top:12px;background:#2a2a2a;border-top:1px solid #333;padding:5px 12px;color:#858585;font-size:11.5px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.sb b{color:#d4d4d4;font-weight:500}
+.logs .ln{padding:1px 0}
+.logs .ln.hit{background:#2a1f16}
+.logs .tsd{color:#858585}
+.logs .host{color:#569cd6}
+.logs .ip{color:#4ec9b0}
+.logs .sev-err{color:#f48771}
+.logs .sev-wrn{color:#dcdcaa}
+.logs .sev-inf{color:#569cd6}
+.logs .mark{color:#f48771;margin-right:6px}
+.hist{margin-top:14px;color:#858585;font-size:12px}
+.hist .n{color:#555;display:inline-block;width:28px;text-align:right;margin-right:10px}
+kbd{background:#2a2a2a;border:1px solid #444;padding:1px 6px;color:#d4d4d4;font:inherit;font-size:11px}
+footer{margin-top:22px;color:#858585;font-size:11.5px;text-align:center}
 </style>
 </head>
 <body>
+<div class="page">
+<div class="cmd"><b>vikrant@home:~/logs$</b> ./logparse --follow --mitre <span style="color:#555">#&nbsp;v0.4.2 &middot; python+flask &middot; regex-based, not ML</span></div>
 
-<nav>
-  <div class="container">
-    <h1>Log Analyzer</h1>
-    <div class="links">
-      <a href="#parser">Parser</a>
-      <a href="#results-section">Results</a>
-      <a href="https://github.com/Vikrant892/log-analyzer-dashboard" target="_blank" class="pill pill-outline">GitHub</a>
-    </div>
-  </div>
-</nav>
+<div class="toolbar">
+<button class="btn" onclick="analyze()">analyze</button>
+<button class="btn" onclick="loadSample()" style="opacity:.8">load sample</button>
+<button class="btn" onclick="clearAll()" style="opacity:.8">clear</button>
+<span class="meta"><kbd>Ctrl+Enter</kbd> analyze &middot; <kbd>/</kbd> search</span>
+</div>
 
-<section class="hero">
-  <div class="container">
-    <h2>Cybersecurity Log Intelligence</h2>
-    <p>Parse, categorize, and detect threats in system logs with MITRE ATT&CK technique mapping.</p>
-    <div class="tech-stack">
-      <span class="tech-tag">Python</span>
-      <span class="tech-tag">Flask</span>
-      <span class="tech-tag">Chart.js</span>
-      <span class="tech-tag">Regex</span>
-    </div>
-  </div>
-</section>
+<div class="split">
+<div class="pane">
+<h5><span>log stream — paste or edit</span><span class="ctrl" onclick="toggleEdit()" id="tg">[edit]</span></h5>
+<textarea id="log" spellcheck="false"></textarea>
+<div class="logs" id="view" style="display:none"></div>
+</div>
+<div class="pane">
+<h5><span>detected threats</span><span id="tct" style="color:#858585">0 events</span></h5>
+<div class="threats" id="threats"><div style="color:#858585">click <b style="color:#d4d4d4">analyze</b> to parse the log buffer.</div></div>
+</div>
+</div>
 
-<section>
-  <div class="container">
-    <div class="stats">
-      <div class="stat-card"><div class="value" id="stat-parsed">0</div><div class="label">Logs Parsed</div></div>
-      <div class="stat-card"><div class="value" id="stat-threats">0</div><div class="label">Threats Detected</div></div>
-      <div class="stat-card"><div class="value" id="stat-types">0</div><div class="label">Alert Types</div></div>
-      <div class="stat-card"><div class="value" id="stat-mitre">0</div><div class="label">MITRE Techniques</div></div>
-    </div>
-  </div>
-</section>
+<div class="sb">
+<span id="mt"><b>0</b> lines &middot; <b>0</b> threats &middot; <b>0</b> unique IPs</span>
+<span>rules: <b>14</b> &middot; mitre mappings active &middot; regex engine</span>
+<span><a href="https://github.com/Vikrant892/log-analyzer-dashboard">github.com/Vikrant892/log-analyzer-dashboard</a></span>
+</div>
 
-<section id="parser">
-  <div class="container">
-    <h3 class="section-title">Log Parser</h3>
-    <p class="section-sub">Paste syslog or auth.log entries below and click Analyze to detect threats and categorize events.</p>
-    <div class="parser-card">
-      <textarea id="log-input" spellcheck="false">Mar 15 08:12:01 server sshd[4821]: Failed password for root from 192.168.1.105 port 22 ssh2
-Mar 15 08:12:03 server sshd[4821]: Failed password for root from 192.168.1.105 port 22 ssh2
-Mar 15 08:12:05 server sshd[4821]: Failed password for root from 192.168.1.105 port 22 ssh2
-Mar 15 08:12:07 server sshd[4821]: Failed password for admin from 192.168.1.105 port 22 ssh2
-Mar 15 08:12:09 server sshd[4821]: Failed password for admin from 192.168.1.105 port 22 ssh2
-Mar 15 08:14:22 server kernel: TCP connection attempt to port 21 from 10.0.0.50
-Mar 15 08:14:22 server kernel: TCP connection attempt to port 22 from 10.0.0.50
-Mar 15 08:14:23 server kernel: TCP connection attempt to port 23 from 10.0.0.50
-Mar 15 08:14:23 server kernel: TCP connection attempt to port 25 from 10.0.0.50
-Mar 15 08:14:24 server kernel: TCP connection attempt to port 80 from 10.0.0.50
-Mar 15 08:15:30 server sshd[4900]: Accepted publickey for deploy from 172.16.0.10 port 22 ssh2
-Mar 15 08:16:45 server sudo: admin : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/bin/bash
-Mar 15 08:18:01 server CRON[5010]: (root) CMD (/usr/bin/backup.sh)</textarea>
-      <div class="parser-actions">
-        <button class="pill pill-primary" onclick="analyzeLogs()">Analyze</button>
-        <button class="pill pill-outline" onclick="clearResults()">Clear</button>
-      </div>
-    </div>
-  </div>
-</section>
+<div class="hist">
+<div><span class="n">1</span>tail -f /var/log/auth.log | grep -i "failed password"</div>
+<div><span class="n">2</span>awk '{print $7}' /var/log/nginx/access.log | sort | uniq -c | sort -rn | head</div>
+<div><span class="n">3</span>./logparse --follow --mitre</div>
+</div>
 
-<section id="results-section">
-  <div class="container">
-    <h3 class="section-title">Analysis Results</h3>
-    <div class="results-grid">
-      <div class="result-panel">
-        <h4>Threat Detection</h4>
-        <div id="threats-list"></div>
-      </div>
-      <div class="result-panel">
-        <h4>Log Type Distribution</h4>
-        <div class="donut-wrap">
-          <div class="donut" id="donut"></div>
-          <div class="donut-legend" id="donut-legend"></div>
-        </div>
-      </div>
-    </div>
-    <div class="result-panel" style="margin-top:24px">
-      <h4>Alert Timeline</h4>
-      <div class="timeline" id="timeline"></div>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="container">
-    <p>Built by Vikrant Sharma &middot; <a href="https://github.com/Vikrant892/log-analyzer-dashboard" target="_blank">View on GitHub</a></p>
-  </div>
-</footer>
+<footer>logparse &middot; vikrant sharma &middot; regex rules, not machine learning (scale doesn't justify it yet)</footer>
+</div>
 
 <script>
-var MITRE = {
-  bruteForce: { id: 'T1110', name: 'Brute Force', tactic: 'Credential Access' },
-  portScan: { id: 'T1046', name: 'Network Service Discovery', tactic: 'Discovery' },
-  privEsc: { id: 'T1548', name: 'Abuse Elevation Control', tactic: 'Privilege Escalation' }
-};
+const SAMPLE=`Apr 20 14:23:01 host-01 sshd[4821]: Failed password for root from 192.168.1.100 port 44281 ssh2
+Apr 20 14:23:04 host-01 sshd[4821]: Failed password for root from 192.168.1.100 port 44281 ssh2
+Apr 20 14:23:07 host-01 sshd[4821]: Failed password for root from 192.168.1.100 port 44281 ssh2
+Apr 20 14:23:10 host-01 sshd[4821]: Failed password for admin from 192.168.1.100 port 44282 ssh2
+Apr 20 14:23:13 host-01 sshd[4821]: Failed password for admin from 192.168.1.100 port 44282 ssh2
+Apr 20 14:23:17 host-01 sshd[4821]: Failed password for admin from 192.168.1.100 port 44282 ssh2
+Apr 20 14:23:21 host-01 sshd[4821]: Failed password for postgres from 192.168.1.100 port 44283 ssh2
+Apr 20 14:23:25 host-01 sshd[4821]: Accepted password for vikrant from 10.0.0.5 port 50214 ssh2
+Apr 20 14:24:58 host-01 kernel: firewall: DROP IN=eth0 SRC=10.0.0.45 DST=10.0.0.12 PROTO=TCP SPT=51234 DPT=22
+Apr 20 14:24:58 host-01 kernel: firewall: DROP IN=eth0 SRC=10.0.0.45 DST=10.0.0.12 PROTO=TCP SPT=51235 DPT=23
+Apr 20 14:24:59 host-01 kernel: firewall: DROP IN=eth0 SRC=10.0.0.45 DST=10.0.0.12 PROTO=TCP SPT=51236 DPT=80
+Apr 20 14:24:59 host-01 kernel: firewall: DROP IN=eth0 SRC=10.0.0.45 DST=10.0.0.12 PROTO=TCP SPT=51237 DPT=443
+Apr 20 14:25:00 host-01 kernel: firewall: DROP IN=eth0 SRC=10.0.0.45 DST=10.0.0.12 PROTO=TCP SPT=51238 DPT=3389
+Apr 20 14:25:00 host-01 kernel: firewall: DROP IN=eth0 SRC=10.0.0.45 DST=10.0.0.12 PROTO=TCP SPT=51239 DPT=3306
+Apr 20 14:26:03 host-01 sudo[5102]: jdoe : TTY=pts/0 ; PWD=/home/jdoe ; USER=root ; COMMAND=/bin/su -
+Apr 20 14:27:19 host-01 nginx: 203.0.113.88 - - [20/Apr/2025:14:27:19] "GET /admin.php HTTP/1.1" 404
+Apr 20 14:27:20 host-01 nginx: 203.0.113.88 - - [20/Apr/2025:14:27:20] "GET /wp-login.php HTTP/1.1" 404
+Apr 20 14:27:20 host-01 nginx: 203.0.113.88 - - [20/Apr/2025:14:27:20] "GET /.env HTTP/1.1" 404
+Apr 20 14:27:21 host-01 nginx: 203.0.113.88 - - [20/Apr/2025:14:27:21] "GET /phpmyadmin HTTP/1.1" 404
+Apr 20 14:27:21 host-01 nginx: 203.0.113.88 - - [20/Apr/2025:14:27:21] "GET /config.bak HTTP/1.1" 404
+Apr 20 14:28:04 host-01 systemd[1]: Started Session 47 of user vikrant.
+Apr 20 14:29:11 host-01 sshd[5240]: Connection from 10.0.0.5 port 50216
+Apr 20 14:30:02 host-01 CRON[5301]: (root) CMD (/usr/local/bin/backup.sh)`;
 
-function parseLogs(raw) {
-  var lines = raw.trim().split('\n').filter(function(l) { return l.trim(); });
-  var results = { lines: [], types: {}, threats: [], timeline: [] };
-  var failedLogins = {};
-  var portScans = {};
+function loadSample(){document.getElementById('log').value=SAMPLE;document.getElementById('view').style.display='none';document.getElementById('log').style.display='';document.getElementById('tg').textContent='[edit]'}
+function clearAll(){document.getElementById('log').value='';document.getElementById('threats').innerHTML='<div style="color:#858585">click <b style="color:#d4d4d4">analyze</b> to parse the log buffer.</div>';document.getElementById('mt').innerHTML='<b>0</b> lines &middot; <b>0</b> threats &middot; <b>0</b> unique IPs';document.getElementById('tct').textContent='0 events'}
+function toggleEdit(){const t=document.getElementById('log'),v=document.getElementById('view');if(v.style.display==='none'){t.style.display='none';v.style.display='';document.getElementById('tg').textContent='[source]'}else{t.style.display='';v.style.display='none';document.getElementById('tg').textContent='[edit]'}}
 
-  lines.forEach(function(line, i) {
-    var parsed = { raw: line, index: i };
-
-    if (/Failed password/i.test(line)) {
-      parsed.type = 'auth_failure';
-      var ipMatch = line.match(/from\s+([\d.]+)/);
-      var userMatch = line.match(/for\s+(\w+)/);
-      if (ipMatch) {
-        var ip = ipMatch[1];
-        failedLogins[ip] = (failedLogins[ip] || 0) + 1;
-        parsed.ip = ip;
-        parsed.user = userMatch ? userMatch[1] : 'unknown';
-      }
-    } else if (/Accepted/i.test(line)) {
-      parsed.type = 'auth_success';
-    } else if (/connection attempt to port/i.test(line)) {
-      parsed.type = 'network';
-      var ipM = line.match(/from\s+([\d.]+)/);
-      var portM = line.match(/port\s+(\d+)/);
-      if (ipM) {
-        var scanIp = ipM[1];
-        if (!portScans[scanIp]) portScans[scanIp] = [];
-        portScans[scanIp].push(parseInt(portM[1]));
-        parsed.ip = scanIp;
-      }
-    } else if (/sudo/i.test(line)) {
-      parsed.type = 'privilege';
-    } else if (/CRON/i.test(line)) {
-      parsed.type = 'scheduled';
-    } else {
-      parsed.type = 'system';
-    }
-
-    results.types[parsed.type] = (results.types[parsed.type] || 0) + 1;
-    results.lines.push(parsed);
-  });
-
-  Object.keys(failedLogins).forEach(function(ip) {
-    var count = failedLogins[ip];
-    if (count >= 3) {
-      results.threats.push({
-        severity: 'critical', type: 'Brute Force Attempt',
-        detail: count + ' failed logins from ' + ip,
-        mitre: MITRE.bruteForce
-      });
-      results.timeline.push({ time: 'Detected', msg: 'Brute force from ' + ip + ' (' + count + ' attempts)', sev: 'crit' });
-    }
-  });
-
-  Object.keys(portScans).forEach(function(ip) {
-    var ports = portScans[ip];
-    if (ports.length >= 3) {
-      var sorted = ports.sort(function(a, b) { return a - b; });
-      results.threats.push({
-        severity: 'high', type: 'Port Scan Detected',
-        detail: ip + ' scanned ports ' + sorted.join(', '),
-        mitre: MITRE.portScan
-      });
-      results.timeline.push({ time: 'Detected', msg: 'Port scan from ' + ip + ' on ' + ports.length + ' ports', sev: 'high' });
-    }
-  });
-
-  results.lines.forEach(function(l) {
-    if (l.type === 'privilege') {
-      results.threats.push({
-        severity: 'medium', type: 'Privilege Escalation',
-        detail: 'sudo command executed to gain root access',
-        mitre: MITRE.privEsc
-      });
-      results.timeline.push({ time: 'Detected', msg: 'Privilege escalation via sudo', sev: 'med' });
-    }
-    if (l.type === 'auth_success') {
-      results.timeline.push({ time: 'Info', msg: 'Successful authentication event', sev: 'low' });
-    }
-  });
-
-  return results;
+function extractIPs(line){const m=line.match(/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b/g);return m||[]}
+function analyze(){
+  const txt=document.getElementById('log').value;const lines=txt.split('\n').filter(Boolean);
+  const threats=[];const hits=new Set();
+  // brute force
+  const bf={};
+  lines.forEach((l,i)=>{const m=l.match(/Failed password for (\S+) from (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/);if(m){const k=m[2];bf[k]=bf[k]||{count:0,users:new Set(),first:null,last:null,idx:[]};bf[k].count++;bf[k].users.add(m[1]);bf[k].last=i;if(bf[k].first===null)bf[k].first=i;bf[k].idx.push(i)}});
+  for(const ip in bf)if(bf[ip].count>=3){threats.push({sev:'hi',ty:'BRUTE_FORCE',detail:'src='+ip+' users='+[...bf[ip].users].join(',')+' count='+bf[ip].count,att:'T1110.001',idx:bf[ip].idx});bf[ip].idx.forEach(i=>hits.add(i))}
+  // port scan
+  const ps={};
+  lines.forEach((l,i)=>{const m=l.match(/SRC=(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*?DPT=(\d+)/);if(m){const k=m[1];ps[k]=ps[k]||{ports:new Set(),idx:[]};ps[k].ports.add(m[2]);ps[k].idx.push(i)}});
+  for(const ip in ps)if(ps[ip].ports.size>=4){threats.push({sev:'hi',ty:'PORT_SCAN',detail:'src='+ip+' ports='+[...ps[ip].ports].slice(0,8).join(','),att:'T1046',idx:ps[ip].idx});ps[ip].idx.forEach(i=>hits.add(i))}
+  // sudo / priv esc
+  lines.forEach((l,i)=>{const m=l.match(/sudo\[\d+\]:\s+(\S+)\s*:.*COMMAND=(.+)$/);if(m){threats.push({sev:'md',ty:'PRIV_ESC',detail:'user='+m[1]+' cmd='+m[2],att:'T1548.003',idx:[i]});hits.add(i)}});
+  // nginx 4xx bursts
+  const nx={};
+  lines.forEach((l,i)=>{const m=l.match(/nginx:\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*"\s+4\d\d\b/);if(m){nx[m[1]]=nx[m[1]]||{count:0,idx:[]};nx[m[1]].count++;nx[m[1]].idx.push(i)}});
+  for(const ip in nx)if(nx[ip].count>=3){threats.push({sev:'md',ty:'WEB_RECON',detail:'src='+ip+' 4xx_burst='+nx[ip].count,att:'T1190',idx:nx[ip].idx});nx[ip].idx.forEach(i=>hits.add(i))}
+  // render
+  const allIPs=new Set();lines.forEach(l=>extractIPs(l).forEach(ip=>allIPs.add(ip)));
+  // render log view with syntax highlight
+  const v=document.getElementById('view');v.innerHTML=lines.map((l,i)=>colorize(l,hits.has(i))).join('');
+  document.getElementById('log').style.display='none';v.style.display='';document.getElementById('tg').textContent='[source]';
+  // threats
+  const th=document.getElementById('threats');
+  if(!threats.length){th.innerHTML='<div style="color:#858585">no threats matched — buffer is clean.</div>'}
+  else{th.innerHTML=threats.map((t,i)=>{const ts=lines[t.idx[0]]?.slice(0,15)||'';return '<div class="tr sev-'+t.sev+'" data-idx="'+t.idx.join(',')+'"><span class="ts">['+ts+']</span><span class="ty">'+t.ty+'</span><span class="det">'+t.detail+'</span><span class="att">→ '+t.att+'</span></div>'}).join('')}
+  document.getElementById('mt').innerHTML='<b>'+lines.length+'</b> lines &middot; <b>'+threats.length+'</b> threats &middot; <b>'+allIPs.size+'</b> unique IPs';
+  document.getElementById('tct').textContent=threats.length+' events';
+  // click to jump
+  document.querySelectorAll('.tr').forEach(row=>row.addEventListener('click',()=>{
+    const idx=row.dataset.idx.split(',').map(Number);
+    const ln=v.children[idx[0]];if(ln){ln.scrollIntoView({block:'center'});ln.style.background='#3a2a1f';setTimeout(()=>ln.style.background='',1200)}
+  }));
 }
-
-function renderDonut(types) {
-  var colors = { auth_failure: '#FF453A', auth_success: '#30D158', network: '#2997FF', privilege: '#FF9F0A', scheduled: '#64D2FF', system: '#86868B' };
-  var labels = { auth_failure: 'Auth Failure', auth_success: 'Auth Success', network: 'Network', privilege: 'Privilege', scheduled: 'Scheduled', system: 'System' };
-  var total = 0;
-  Object.keys(types).forEach(function(k) { total += types[k]; });
-  var gradient = '';
-  var offset = 0;
-  var legend = document.getElementById('donut-legend');
-  legend.innerHTML = '';
-
-  Object.keys(types).forEach(function(type) {
-    var count = types[type];
-    var pct = (count / total) * 100;
-    var color = colors[type] || '#86868B';
-    gradient += color + ' ' + offset + '% ' + (offset + pct) + '%, ';
-    offset += pct;
-    legend.innerHTML += '<div class="legend-item"><div class="legend-color" style="background:' + color + '"></div>' + (labels[type] || type) + ' (' + count + ')</div>';
-  });
-
-  var donut = document.getElementById('donut');
-  donut.style.background = 'conic-gradient(' + gradient.slice(0, -2) + ')';
-  donut.innerHTML = '<div class="donut-center">' + total + ' logs</div>';
+function colorize(l,hit){
+  let s=l;
+  s=s.replace(/(\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b)/g,'<span class="ip">$1</span>');
+  s=s.replace(/^([A-Z][a-z]{2}\s+\d+\s+\d{2}:\d{2}:\d{2})/,'<span class="tsd">$1</span>');
+  s=s.replace(/\b(sshd|nginx|kernel|sudo|CRON|systemd)\b/,'<span class="host">$1</span>');
+  if(/failed|drop|error/i.test(l))s='<span class="sev-err">'+s+'</span>';
+  else if(/warn|denied/i.test(l))s='<span class="sev-wrn">'+s+'</span>';
+  else if(/accepted|started|cmd=/i.test(l))s='<span class="sev-inf">'+s+'</span>';
+  return '<div class="ln'+(hit?' hit':'')+'">'+(hit?'<span class="mark">│</span>':' ')+s+'</div>';
 }
-
-function analyzeLogs() {
-  var raw = document.getElementById('log-input').value;
-  if (!raw.trim()) return;
-
-  var results = parseLogs(raw);
-
-  document.getElementById('stat-parsed').textContent = results.lines.length;
-  document.getElementById('stat-threats').textContent = results.threats.length;
-
-  var uniqueTypes = {};
-  results.threats.forEach(function(t) { uniqueTypes[t.type] = true; });
-  document.getElementById('stat-types').textContent = Object.keys(uniqueTypes).length;
-
-  var uniqueMitre = {};
-  results.threats.forEach(function(t) { if (t.mitre) uniqueMitre[t.mitre.id] = true; });
-  document.getElementById('stat-mitre').textContent = Object.keys(uniqueMitre).length;
-
-  var threatsList = document.getElementById('threats-list');
-  if (results.threats.length === 0) {
-    threatsList.innerHTML = '<p style="color:var(--sub);font-size:14px">No threats detected.</p>';
-  } else {
-    threatsList.innerHTML = results.threats.map(function(t) {
-      var sevClass = t.severity === 'critical' ? 'crit' : t.severity === 'high' ? 'high' : t.severity === 'medium' ? 'med' : 'low';
-      return '<div class="threat-item"><div class="sev-dot sev-' + sevClass + '"></div><div class="threat-info"><div class="title">' + t.type + '</div>' + (t.mitre ? '<div class="mitre">' + t.mitre.id + ' - ' + t.mitre.name + ' (' + t.mitre.tactic + ')</div>' : '') + '<div class="detail">' + t.detail + '</div></div></div>';
-    }).join('');
-  }
-
-  renderDonut(results.types);
-
-  var timeline = document.getElementById('timeline');
-  timeline.innerHTML = results.timeline.map(function(t) {
-    var colorVar = t.sev === 'crit' ? '--crit' : t.sev === 'high' ? '--high' : t.sev === 'med' ? '--med' : '--low';
-    return '<div class="tl-item tl-' + t.sev + '"><div class="tl-time">' + t.time + '</div><div class="tl-msg">' + t.msg + '</div><div class="tl-sev" style="color:var(' + colorVar + ')">' + t.sev.toUpperCase() + '</div></div>';
-  }).join('');
-
-  document.getElementById('results-section').style.display = 'block';
-  document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
-}
-
-function clearResults() {
-  document.getElementById('results-section').style.display = 'none';
-  document.getElementById('stat-parsed').textContent = '0';
-  document.getElementById('stat-threats').textContent = '0';
-  document.getElementById('stat-types').textContent = '0';
-  document.getElementById('stat-mitre').textContent = '0';
-}
+loadSample();
+document.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter'){e.preventDefault();analyze()}});
 </script>
 </body>
 </html>
