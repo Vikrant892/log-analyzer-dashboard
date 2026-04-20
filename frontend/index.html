@@ -3,88 +3,162 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>logparse — tail / grep log intel</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<title>LogInsight — Log Intelligence Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{background:#1e1e1e;color:#d4d4d4;font-family:'IBM Plex Mono',Consolas,ui-monospace,monospace;font-size:13px;line-height:1.5;min-height:100vh}
-a{color:#569cd6;text-decoration:none}a:hover{text-decoration:underline}
-.page{max-width:1060px;margin:0 auto;padding:20px 22px 40px}
-.cmd{color:#858585;margin-bottom:16px;font-size:12.5px}
-.cmd b{color:#d4d4d4;font-weight:500}
-.split{display:grid;grid-template-rows:65% 35%;gap:14px;height:calc(100vh - 90px);min-height:460px}
-.pane{border:1px solid #333;display:flex;flex-direction:column;overflow:hidden}
-.pane h5{background:#2a2a2a;border-bottom:1px solid #333;padding:5px 10px;font-size:11.5px;color:#858585;font-weight:500;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between}
-.pane h5 .ctrl{color:#569cd6;cursor:pointer}
-textarea,.logs{flex:1;background:transparent;border:0;color:#d4d4d4;font:inherit;padding:10px 14px;resize:none;outline:none;overflow:auto;white-space:pre;line-height:1.55}
-textarea:focus{background:#252525}
-.threats{flex:1;overflow:auto;padding:10px 14px}
-.tr{padding:3px 0;cursor:pointer;border-left:2px solid transparent;padding-left:8px;margin-left:-10px}
-.tr:hover{background:#2a2a2a}
-.tr .ts{color:#858585;margin-right:10px}
-.tr .ty{font-weight:500;margin-right:10px;display:inline-block;min-width:130px}
-.tr .det{color:#858585}
-.tr .att{color:#dcdcaa;margin-left:10px}
-.tr.sev-hi{border-left-color:#f48771}.tr.sev-hi .ty{color:#f48771}
-.tr.sev-md{border-left-color:#dcdcaa}.tr.sev-md .ty{color:#dcdcaa}
-.tr.sev-lo{border-left-color:#569cd6}.tr.sev-lo .ty{color:#569cd6}
-.btn{background:transparent;border:1px solid #3c3c3c;color:#d4d4d4;font:inherit;padding:4px 12px;cursor:pointer;border-radius:0}
-.btn:hover{border-color:#569cd6;color:#569cd6}
-.toolbar{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
-.toolbar .meta{color:#858585;margin-left:auto;font-size:12px}
-.sb{margin-top:12px;background:#2a2a2a;border-top:1px solid #333;padding:5px 12px;color:#858585;font-size:11.5px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.sb b{color:#d4d4d4;font-weight:500}
-.logs .ln{padding:1px 0}
-.logs .ln.hit{background:#2a1f16}
-.logs .tsd{color:#858585}
-.logs .host{color:#569cd6}
-.logs .ip{color:#4ec9b0}
-.logs .sev-err{color:#f48771}
-.logs .sev-wrn{color:#dcdcaa}
-.logs .sev-inf{color:#569cd6}
-.logs .mark{color:#f48771;margin-right:6px}
-.hist{margin-top:14px;color:#858585;font-size:12px}
-.hist .n{color:#555;display:inline-block;width:28px;text-align:right;margin-right:10px}
-kbd{background:#2a2a2a;border:1px solid #444;padding:1px 6px;color:#d4d4d4;font:inherit;font-size:11px}
-footer{margin-top:22px;color:#858585;font-size:11.5px;text-align:center}
+:root{
+  --bg:#0f1419; --panel:#161c24; --panel2:#1e2632; --line:#2a3440;
+  --ink:#e8edf2; --dim:#7a8a9d;
+  --mint:#55efc4;
+  --rose:#ff6b7a;
+  --gold:#ffd93d;
+  --sky:#6ec5e9;
+}
+html,body{background:var(--bg);color:var(--ink);font-family:'Sora',system-ui,sans-serif;font-size:14.5px;line-height:1.55;min-height:100vh;overflow-x:hidden}
+.wrap{max-width:1240px;margin:0 auto;padding:26px 28px 60px}
+
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+.brand{display:flex;gap:14px;align-items:center}
+.bm{width:42px;height:42px;background:var(--mint);border-radius:11px;position:relative;display:flex;align-items:center;justify-content:center}
+.bm::before{content:'';position:absolute;width:18px;height:3px;background:var(--bg);top:12px;box-shadow:0 7px 0 var(--bg),0 14px 0 var(--bg)}
+.brand h1{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.brand small{display:block;color:var(--dim);font-size:12px;font-family:'IBM Plex Mono',monospace;margin-top:-2px}
+.nav{display:flex;gap:4px;background:var(--panel);padding:4px;border-radius:10px}
+.nav a{padding:7px 14px;color:var(--dim);text-decoration:none;font-size:13px;border-radius:8px;cursor:pointer;font-weight:500}
+.nav a.on{background:var(--panel2);color:var(--ink)}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.st{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden}
+.st .l{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px}
+.st .n{font-size:28px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-.02em;line-height:1.05}
+.st.mn .n{color:var(--mint)}
+.st.rs .n{color:var(--rose)}
+.st.gd .n{color:var(--gold)}
+.st.sk .n{color:var(--sky)}
+.st .d{font-size:12px;color:var(--dim);margin-top:4px}
+
+/* Main grid */
+.grid-2{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;margin-bottom:18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.ph{padding:16px 22px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}
+.ph h3{font-size:16px;font-weight:700}
+.ph small{color:var(--dim);font-size:12.5px;display:block;margin-top:2px;font-weight:400}
+.ph .actions{display:flex;gap:8px}
+.btn{padding:6px 14px;background:var(--mint);color:var(--bg);border:none;font:inherit;font-weight:700;border-radius:8px;cursor:pointer;font-size:12.5px}
+.btn:hover{background:#4adcb1}
+.btn.g{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
+.btn.g:hover{background:var(--line)}
+
+textarea{width:100%;background:var(--bg);border:none;color:var(--ink);padding:18px 22px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.7;resize:vertical;outline:none;min-height:280px;display:block}
+textarea:focus{background:#0a0e13}
+
+.threats{max-height:420px;overflow:auto;padding:4px 0}
+.threat{padding:14px 22px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .15s}
+.threat:hover{background:var(--panel2)}
+.threat:last-child{border-bottom:0}
+.threat .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.threat .lvl{padding:2px 9px;border-radius:100px;font-size:10.5px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em}
+.threat.hi .lvl{background:rgba(255,107,122,.14);color:var(--rose)}
+.threat.md .lvl{background:rgba(255,217,61,.14);color:var(--gold)}
+.threat.lo .lvl{background:rgba(110,197,233,.14);color:var(--sky)}
+.threat .nm{font-weight:700;font-size:14px}
+.threat .ts{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--dim)}
+.threat .det{color:var(--dim);font-size:12.5px;font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.threat .mit{display:inline-block;margin-top:8px;padding:2px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--gold)}
+
+/* Donut */
+.donut{padding:22px;display:flex;flex-direction:column;align-items:center}
+.donut-svg{width:200px;height:200px;position:relative;margin-bottom:16px}
+.donut-svg svg{transform:rotate(-90deg)}
+.donut-ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.donut-ctr .n{font-size:32px;font-weight:800;font-family:'IBM Plex Mono',monospace;letter-spacing:-.02em;color:var(--ink)}
+.donut-ctr .l{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.legend{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;font-size:12.5px;margin-top:6px}
+.legend .li{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--panel2);border-radius:8px}
+.legend .li .sw{width:10px;height:10px;border-radius:3px}
+.legend .li b{margin-left:auto;font-family:'IBM Plex Mono',monospace;color:var(--dim)}
+
+/* Timeline */
+.timeline{padding:18px 22px 22px;position:relative}
+.timeline::before{content:'';position:absolute;left:28px;top:18px;bottom:18px;width:2px;background:var(--line)}
+.tl-item{position:relative;padding-left:36px;padding-bottom:16px}
+.tl-item:last-child{padding-bottom:0}
+.tl-item .dot{position:absolute;left:20px;top:6px;width:14px;height:14px;background:var(--bg);border:2px solid var(--mint);border-radius:50%}
+.tl-item.hi .dot{border-color:var(--rose)}
+.tl-item.md .dot{border-color:var(--gold)}
+.tl-item.lo .dot{border-color:var(--sky)}
+.tl-item .t{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin-bottom:2px}
+.tl-item .n{font-weight:600;font-size:13.5px}
+.tl-item .d{font-size:12.5px;color:var(--dim);margin-top:2px}
+
+.foot{margin-top:20px;padding-top:20px;border-top:1px solid var(--line);color:var(--dim);font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.foot a{color:var(--ink)}
+
+@media(max-width:1000px){.grid-2{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
-<div class="page">
-<div class="cmd"><b>vikrant@home:~/logs$</b> ./logparse --follow --mitre <span style="color:#555">#&nbsp;v0.4.2 &middot; python+flask &middot; regex-based, not ML</span></div>
+<div class="wrap">
 
-<div class="toolbar">
-<button class="btn" onclick="analyze()">analyze</button>
-<button class="btn" onclick="loadSample()" style="opacity:.8">load sample</button>
-<button class="btn" onclick="clearAll()" style="opacity:.8">clear</button>
-<span class="meta"><kbd>Ctrl+Enter</kbd> analyze &middot; <kbd>/</kbd> search</span>
-</div>
+<header class="top">
+  <div class="brand"><div class="bm"></div><div><h1>LogInsight</h1><small>lightweight SIEM · v0.4.2</small></div></div>
+  <nav class="nav"><a class="on">Analyser</a><a>Rules (14)</a><a>MITRE Map</a><a>Settings</a></nav>
+</header>
 
-<div class="split">
-<div class="pane">
-<h5><span>log stream — paste or edit</span><span class="ctrl" onclick="toggleEdit()" id="tg">[edit]</span></h5>
-<textarea id="log" spellcheck="false"></textarea>
-<div class="logs" id="view" style="display:none"></div>
-</div>
-<div class="pane">
-<h5><span>detected threats</span><span id="tct" style="color:#858585">0 events</span></h5>
-<div class="threats" id="threats"><div style="color:#858585">click <b style="color:#d4d4d4">analyze</b> to parse the log buffer.</div></div>
-</div>
-</div>
+<section class="stats">
+  <div class="st mn"><div class="l">Lines Parsed</div><div class="n" id="slines">0</div><div class="d">this session</div></div>
+  <div class="st rs"><div class="l">Threats Detected</div><div class="n" id="sthreats">0</div><div class="d">across 14 rules</div></div>
+  <div class="st gd"><div class="l">Unique Sources</div><div class="n" id="sIPs">0</div><div class="d">distinct IPs</div></div>
+  <div class="st sk"><div class="l">ATT&CK Mapped</div><div class="n" id="smitre">0</div><div class="d">techniques covered</div></div>
+</section>
 
-<div class="sb">
-<span id="mt"><b>0</b> lines &middot; <b>0</b> threats &middot; <b>0</b> unique IPs</span>
-<span>rules: <b>14</b> &middot; mitre mappings active &middot; regex engine</span>
-<span><a href="https://github.com/Vikrant892/log-analyzer-dashboard">github.com/Vikrant892/log-analyzer-dashboard</a></span>
-</div>
+<section class="grid-2">
+  <div class="panel">
+    <div class="ph"><div><h3>Log Stream</h3><small>Paste syslog, auth.log, nginx, or firewall lines</small></div><div class="actions"><button class="btn" onclick="analyze()">▶ Analyse</button><button class="btn g" onclick="loadSample()">Sample</button><button class="btn g" onclick="clearAll()">Clear</button></div></div>
+    <textarea id="log" spellcheck="false"></textarea>
+  </div>
 
-<div class="hist">
-<div><span class="n">1</span>tail -f /var/log/auth.log | grep -i "failed password"</div>
-<div><span class="n">2</span>awk '{print $7}' /var/log/nginx/access.log | sort | uniq -c | sort -rn | head</div>
-<div><span class="n">3</span>./logparse --follow --mitre</div>
-</div>
+  <div class="panel">
+    <div class="ph"><div><h3>Detected Threats</h3><small id="tcount">Click analyse to scan</small></div></div>
+    <div class="threats" id="threats"><div style="padding:32px 22px;text-align:center;color:var(--dim)">Threats will appear here</div></div>
+  </div>
+</section>
 
-<footer>logparse &middot; vikrant sharma &middot; regex rules, not machine learning (scale doesn't justify it yet)</footer>
+<section class="grid-2">
+  <div class="panel">
+    <div class="ph"><div><h3>Alert Timeline</h3><small>Chronological view of detected events</small></div></div>
+    <div class="timeline" id="timeline"><div style="padding:20px;color:var(--dim);text-align:center">Timeline populates after analysis</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><div><h3>Log Type Distribution</h3><small>Parsed by source daemon</small></div></div>
+    <div class="donut">
+      <div class="donut-svg">
+        <svg width="200" height="200" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="78" fill="none" stroke="#2a3440" stroke-width="24"/>
+          <circle id="arc1" cx="100" cy="100" r="78" fill="none" stroke="#55efc4" stroke-width="24" stroke-dasharray="0 490" stroke-linecap="round"/>
+          <circle id="arc2" cx="100" cy="100" r="78" fill="none" stroke="#ff6b7a" stroke-width="24" stroke-dasharray="0 490"/>
+          <circle id="arc3" cx="100" cy="100" r="78" fill="none" stroke="#ffd93d" stroke-width="24" stroke-dasharray="0 490"/>
+          <circle id="arc4" cx="100" cy="100" r="78" fill="none" stroke="#6ec5e9" stroke-width="24" stroke-dasharray="0 490"/>
+        </svg>
+        <div class="donut-ctr"><div class="n" id="dTotal">0</div><div class="l">Total Lines</div></div>
+      </div>
+      <div class="legend">
+        <div class="li"><span class="sw" style="background:var(--mint)"></span>sshd<b id="cSSH">0</b></div>
+        <div class="li"><span class="sw" style="background:var(--rose)"></span>firewall<b id="cFW">0</b></div>
+        <div class="li"><span class="sw" style="background:var(--gold)"></span>nginx<b id="cNGX">0</b></div>
+        <div class="li"><span class="sw" style="background:var(--sky)"></span>other<b id="cOTH">0</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <span>LogInsight · Vikrant Sharma · Python + Flask + Regex</span>
+  <span><a href="https://github.com/Vikrant892/log-analyzer-dashboard">github.com/Vikrant892/log-analyzer-dashboard</a></span>
+</footer>
 </div>
 
 <script>
@@ -101,68 +175,64 @@ Apr 20 14:24:58 host-01 kernel: firewall: DROP IN=eth0 SRC=10.0.0.45 DST=10.0.0.
 Apr 20 14:24:59 host-01 kernel: firewall: DROP IN=eth0 SRC=10.0.0.45 DST=10.0.0.12 PROTO=TCP SPT=51236 DPT=80
 Apr 20 14:24:59 host-01 kernel: firewall: DROP IN=eth0 SRC=10.0.0.45 DST=10.0.0.12 PROTO=TCP SPT=51237 DPT=443
 Apr 20 14:25:00 host-01 kernel: firewall: DROP IN=eth0 SRC=10.0.0.45 DST=10.0.0.12 PROTO=TCP SPT=51238 DPT=3389
-Apr 20 14:25:00 host-01 kernel: firewall: DROP IN=eth0 SRC=10.0.0.45 DST=10.0.0.12 PROTO=TCP SPT=51239 DPT=3306
 Apr 20 14:26:03 host-01 sudo[5102]: jdoe : TTY=pts/0 ; PWD=/home/jdoe ; USER=root ; COMMAND=/bin/su -
 Apr 20 14:27:19 host-01 nginx: 203.0.113.88 - - [20/Apr/2025:14:27:19] "GET /admin.php HTTP/1.1" 404
 Apr 20 14:27:20 host-01 nginx: 203.0.113.88 - - [20/Apr/2025:14:27:20] "GET /wp-login.php HTTP/1.1" 404
 Apr 20 14:27:20 host-01 nginx: 203.0.113.88 - - [20/Apr/2025:14:27:20] "GET /.env HTTP/1.1" 404
 Apr 20 14:27:21 host-01 nginx: 203.0.113.88 - - [20/Apr/2025:14:27:21] "GET /phpmyadmin HTTP/1.1" 404
-Apr 20 14:27:21 host-01 nginx: 203.0.113.88 - - [20/Apr/2025:14:27:21] "GET /config.bak HTTP/1.1" 404
-Apr 20 14:28:04 host-01 systemd[1]: Started Session 47 of user vikrant.
-Apr 20 14:29:11 host-01 sshd[5240]: Connection from 10.0.0.5 port 50216
-Apr 20 14:30:02 host-01 CRON[5301]: (root) CMD (/usr/local/bin/backup.sh)`;
+Apr 20 14:28:04 host-01 systemd[1]: Started Session 47 of user vikrant.`;
 
-function loadSample(){document.getElementById('log').value=SAMPLE;document.getElementById('view').style.display='none';document.getElementById('log').style.display='';document.getElementById('tg').textContent='[edit]'}
-function clearAll(){document.getElementById('log').value='';document.getElementById('threats').innerHTML='<div style="color:#858585">click <b style="color:#d4d4d4">analyze</b> to parse the log buffer.</div>';document.getElementById('mt').innerHTML='<b>0</b> lines &middot; <b>0</b> threats &middot; <b>0</b> unique IPs';document.getElementById('tct').textContent='0 events'}
-function toggleEdit(){const t=document.getElementById('log'),v=document.getElementById('view');if(v.style.display==='none'){t.style.display='none';v.style.display='';document.getElementById('tg').textContent='[source]'}else{t.style.display='';v.style.display='none';document.getElementById('tg').textContent='[edit]'}}
+function loadSample(){document.getElementById('log').value=SAMPLE}
+function clearAll(){document.getElementById('log').value='';document.getElementById('threats').innerHTML='<div style="padding:32px 22px;text-align:center;color:var(--dim)">Threats will appear here</div>';document.getElementById('timeline').innerHTML='<div style="padding:20px;color:var(--dim);text-align:center">Timeline populates after analysis</div>';updateStats(0,0,0,0,{s:0,f:0,n:0,o:0})}
 
-function extractIPs(line){const m=line.match(/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b/g);return m||[]}
+function updateStats(l,t,i,m,dist){
+  document.getElementById('slines').textContent=l.toLocaleString();
+  document.getElementById('sthreats').textContent=t;
+  document.getElementById('sIPs').textContent=i;
+  document.getElementById('smitre').textContent=m;
+  document.getElementById('dTotal').textContent=l;
+  document.getElementById('cSSH').textContent=dist.s;
+  document.getElementById('cFW').textContent=dist.f;
+  document.getElementById('cNGX').textContent=dist.n;
+  document.getElementById('cOTH').textContent=dist.o;
+  const tot=dist.s+dist.f+dist.n+dist.o||1;const C=490;
+  let acc=0;
+  const arcs=[['arc1',dist.s],['arc2',dist.f],['arc3',dist.n],['arc4',dist.o]];
+  arcs.forEach(([id,v])=>{const el=document.getElementById(id);const len=v/tot*C;el.setAttribute('stroke-dasharray',len+' '+(C-len));el.setAttribute('stroke-dashoffset',-acc);acc+=len});
+}
+updateStats(0,0,0,0,{s:0,f:0,n:0,o:0});
+
 function analyze(){
   const txt=document.getElementById('log').value;const lines=txt.split('\n').filter(Boolean);
-  const threats=[];const hits=new Set();
+  const threats=[];const allIPs=new Set();const dist={s:0,f:0,n:0,o:0};const techs=new Set();
+  // count distribution
+  lines.forEach(l=>{if(/sshd|sudo|systemd/i.test(l))dist.s++;else if(/kernel:|firewall:/i.test(l))dist.f++;else if(/nginx|apache/i.test(l))dist.n++;else dist.o++;(l.match(/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b/g)||[]).forEach(i=>allIPs.add(i))});
   // brute force
-  const bf={};
-  lines.forEach((l,i)=>{const m=l.match(/Failed password for (\S+) from (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/);if(m){const k=m[2];bf[k]=bf[k]||{count:0,users:new Set(),first:null,last:null,idx:[]};bf[k].count++;bf[k].users.add(m[1]);bf[k].last=i;if(bf[k].first===null)bf[k].first=i;bf[k].idx.push(i)}});
-  for(const ip in bf)if(bf[ip].count>=3){threats.push({sev:'hi',ty:'BRUTE_FORCE',detail:'src='+ip+' users='+[...bf[ip].users].join(',')+' count='+bf[ip].count,att:'T1110.001',idx:bf[ip].idx});bf[ip].idx.forEach(i=>hits.add(i))}
+  const bf={};lines.forEach((l,i)=>{const m=l.match(/Failed password for (\S+) from (\d+\.\d+\.\d+\.\d+)/);if(m){const k=m[2];bf[k]=bf[k]||{count:0,users:new Set(),idx:[]};bf[k].count++;bf[k].users.add(m[1]);bf[k].idx.push(i)}});
+  for(const ip in bf)if(bf[ip].count>=3){threats.push({sev:'hi',t:'Brute Force',det:'src='+ip+' · '+[...bf[ip].users].join(', ')+' · '+bf[ip].count+' attempts',mit:'T1110.001',time:extractTime(lines[bf[ip].idx[0]])});techs.add('T1110.001')}
   // port scan
-  const ps={};
-  lines.forEach((l,i)=>{const m=l.match(/SRC=(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*?DPT=(\d+)/);if(m){const k=m[1];ps[k]=ps[k]||{ports:new Set(),idx:[]};ps[k].ports.add(m[2]);ps[k].idx.push(i)}});
-  for(const ip in ps)if(ps[ip].ports.size>=4){threats.push({sev:'hi',ty:'PORT_SCAN',detail:'src='+ip+' ports='+[...ps[ip].ports].slice(0,8).join(','),att:'T1046',idx:ps[ip].idx});ps[ip].idx.forEach(i=>hits.add(i))}
-  // sudo / priv esc
-  lines.forEach((l,i)=>{const m=l.match(/sudo\[\d+\]:\s+(\S+)\s*:.*COMMAND=(.+)$/);if(m){threats.push({sev:'md',ty:'PRIV_ESC',detail:'user='+m[1]+' cmd='+m[2],att:'T1548.003',idx:[i]});hits.add(i)}});
-  // nginx 4xx bursts
-  const nx={};
-  lines.forEach((l,i)=>{const m=l.match(/nginx:\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*"\s+4\d\d\b/);if(m){nx[m[1]]=nx[m[1]]||{count:0,idx:[]};nx[m[1]].count++;nx[m[1]].idx.push(i)}});
-  for(const ip in nx)if(nx[ip].count>=3){threats.push({sev:'md',ty:'WEB_RECON',detail:'src='+ip+' 4xx_burst='+nx[ip].count,att:'T1190',idx:nx[ip].idx});nx[ip].idx.forEach(i=>hits.add(i))}
-  // render
-  const allIPs=new Set();lines.forEach(l=>extractIPs(l).forEach(ip=>allIPs.add(ip)));
-  // render log view with syntax highlight
-  const v=document.getElementById('view');v.innerHTML=lines.map((l,i)=>colorize(l,hits.has(i))).join('');
-  document.getElementById('log').style.display='none';v.style.display='';document.getElementById('tg').textContent='[source]';
-  // threats
-  const th=document.getElementById('threats');
-  if(!threats.length){th.innerHTML='<div style="color:#858585">no threats matched — buffer is clean.</div>'}
-  else{th.innerHTML=threats.map((t,i)=>{const ts=lines[t.idx[0]]?.slice(0,15)||'';return '<div class="tr sev-'+t.sev+'" data-idx="'+t.idx.join(',')+'"><span class="ts">['+ts+']</span><span class="ty">'+t.ty+'</span><span class="det">'+t.detail+'</span><span class="att">→ '+t.att+'</span></div>'}).join('')}
-  document.getElementById('mt').innerHTML='<b>'+lines.length+'</b> lines &middot; <b>'+threats.length+'</b> threats &middot; <b>'+allIPs.size+'</b> unique IPs';
-  document.getElementById('tct').textContent=threats.length+' events';
-  // click to jump
-  document.querySelectorAll('.tr').forEach(row=>row.addEventListener('click',()=>{
-    const idx=row.dataset.idx.split(',').map(Number);
-    const ln=v.children[idx[0]];if(ln){ln.scrollIntoView({block:'center'});ln.style.background='#3a2a1f';setTimeout(()=>ln.style.background='',1200)}
-  }));
+  const ps={};lines.forEach((l,i)=>{const m=l.match(/SRC=(\d+\.\d+\.\d+\.\d+).*DPT=(\d+)/);if(m){const k=m[1];ps[k]=ps[k]||{ports:new Set(),idx:[]};ps[k].ports.add(m[2]);ps[k].idx.push(i)}});
+  for(const ip in ps)if(ps[ip].ports.size>=4){threats.push({sev:'hi',t:'Port Scan',det:'src='+ip+' · ports '+[...ps[ip].ports].slice(0,6).join(','),mit:'T1046',time:extractTime(lines[ps[ip].idx[0]])});techs.add('T1046')}
+  // sudo
+  lines.forEach((l,i)=>{const m=l.match(/sudo\[\d+\]:\s+(\S+)\s*:.*COMMAND=(.+)$/);if(m){threats.push({sev:'md',t:'Privilege Escalation',det:'user='+m[1]+' · cmd='+m[2].trim(),mit:'T1548.003',time:extractTime(l)});techs.add('T1548.003')}});
+  // nginx 4xx burst
+  const nx={};lines.forEach((l,i)=>{const m=l.match(/nginx:\s+(\d+\.\d+\.\d+\.\d+).*"\s+4\d\d\b/);if(m){nx[m[1]]=nx[m[1]]||{count:0,idx:[]};nx[m[1]].count++;nx[m[1]].idx.push(i)}});
+  for(const ip in nx)if(nx[ip].count>=3){threats.push({sev:'md',t:'Web Recon',det:'src='+ip+' · '+nx[ip].count+' 4xx responses',mit:'T1190',time:extractTime(lines[nx[ip].idx[0]])});techs.add('T1190')}
+
+  updateStats(lines.length,threats.length,allIPs.size,techs.size,dist);
+
+  const tc=document.getElementById('threats');
+  if(!threats.length){tc.innerHTML='<div style="padding:32px 22px;text-align:center;color:var(--mint)">✓ No threats detected · buffer looks clean</div>'}
+  else{tc.innerHTML=threats.map(th=>'<div class="threat '+th.sev+'"><div class="head"><div class="nm">'+th.t+'</div><span class="lvl">'+(th.sev==='hi'?'HIGH':th.sev==='md'?'MED':'LOW')+'</span></div><div class="ts">'+th.time+'</div><div class="det">'+th.det+'</div><span class="mit">→ '+th.mit+'</span></div>').join('')}
+
+  const tl=document.getElementById('timeline');
+  if(!threats.length){tl.innerHTML='<div style="padding:20px;color:var(--dim);text-align:center">— no events —</div>'}
+  else{tl.innerHTML=threats.map(th=>'<div class="tl-item '+th.sev+'"><div class="dot"></div><div class="t">'+th.time+'</div><div class="n">'+th.t+'</div><div class="d">'+th.det+'</div></div>').join('')}
+  document.getElementById('tcount').textContent=threats.length+' event'+(threats.length===1?'':'s')+' · '+techs.size+' technique(s)';
 }
-function colorize(l,hit){
-  let s=l;
-  s=s.replace(/(\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b)/g,'<span class="ip">$1</span>');
-  s=s.replace(/^([A-Z][a-z]{2}\s+\d+\s+\d{2}:\d{2}:\d{2})/,'<span class="tsd">$1</span>');
-  s=s.replace(/\b(sshd|nginx|kernel|sudo|CRON|systemd)\b/,'<span class="host">$1</span>');
-  if(/failed|drop|error/i.test(l))s='<span class="sev-err">'+s+'</span>';
-  else if(/warn|denied/i.test(l))s='<span class="sev-wrn">'+s+'</span>';
-  else if(/accepted|started|cmd=/i.test(l))s='<span class="sev-inf">'+s+'</span>';
-  return '<div class="ln'+(hit?' hit':'')+'">'+(hit?'<span class="mark">│</span>':' ')+s+'</div>';
-}
+function extractTime(l){return (l||'').slice(0,15)}
 loadSample();
-document.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter'){e.preventDefault();analyze()}});
+analyze();
 </script>
 </body>
 </html>
