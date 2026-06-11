@@ -8,7 +8,7 @@ import re
 from datetime import datetime
 
 
-# syslog RFC 3164 — the "standard" that nobody follows consistently
+# syslog RFC 3164 - the "standard" that nobody follows consistently
 # format: <priority>timestamp hostname app[pid]: message
 # but half the time priority is missing so we handle both
 SYSLOG_PATTERN = re.compile(
@@ -16,17 +16,17 @@ SYSLOG_PATTERN = re.compile(
     r'(\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})' # timestamp (Jan  5 14:23:01)
     r'\s+(\S+)'                                # hostname
     r'\s+(\S+?)(?:\[(\d+)\])?:\s*'             # app[pid]
-    r'(.+)$'                                   # message — the good stuff
+    r'(.+)$'                                   # message - the good stuff
 )
 
-# auth.log ssh patterns — mitre att&ck T1110 (brute force) detection starts here
+# auth.log ssh patterns - mitre att&ck T1110 (brute force) detection starts here
 SSH_FAILED_PATTERN = re.compile(
     r'Failed (?:password|publickey) for (?:invalid user )?(\S+) from (\S+) port (\d+)'
 )
 SSH_SUCCESS_PATTERN = re.compile(
     r'Accepted (?:password|publickey) for (\S+) from (\S+) port (\d+)'
 )
-# sudo stuff — privilege escalation attempts (T1548)
+# sudo stuff - privilege escalation attempts (T1548)
 SUDO_PATTERN = re.compile(
     r'(\S+)\s*:\s*.*COMMAND=(.+)$'
 )
@@ -35,7 +35,7 @@ SUDO_FAIL_PATTERN = re.compile(
 )
 
 # apache/nginx combined log format
-# regex from hell but it works — matches the standard combined format
+# regex from hell but it works - matches the standard combined format
 # 127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.1" 200 2326 "http://ref" "Mozilla/4.0"
 ACCESS_LOG_PATTERN = re.compile(
     r'^(\S+)\s+'        # client ip
@@ -95,7 +95,7 @@ def parse_syslog_line(line):
         'raw': line.strip()
     }
 
-    # check for ssh failures — this is where the fun begins
+    # check for ssh failures - this is where the fun begins
     ssh_fail = SSH_FAILED_PATTERN.search(message)
     if ssh_fail:
         event['event_type'] = 'ssh_failed'
@@ -124,7 +124,7 @@ def parse_syslog_line(line):
         event['command'] = sudo.group(2).strip()
         return event
 
-    # sudo failures — someone trying stuff they shouldn't
+    # sudo failures - someone trying stuff they shouldn't
     sudo_fail = SUDO_FAIL_PATTERN.search(message)
     if sudo_fail:
         event['event_type'] = 'sudo_failure'
@@ -144,7 +144,7 @@ def parse_access_line(line):
     groups = m.groups()
     status = int(groups[7])
 
-    # severity based on status code — simple but effective
+    # severity based on status code - simple but effective
     if status >= 500:
         severity = 'critical'
     elif status >= 400:
@@ -191,7 +191,7 @@ def parse_log_file(raw_text, log_type=None):
         if log_type == 'access':
             event = parse_access_line(line)
         else:
-            # default to syslog parser — handles auth.log too
+            # default to syslog parser - handles auth.log too
             event = parse_syslog_line(line)
 
         if event:

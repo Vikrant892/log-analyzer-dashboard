@@ -1,8 +1,8 @@
-# Log Analyzer — SIEM Dashboard
+# Log Analyzer - SIEM Dashboard
 
 I started building this while working at SecurDI because I wanted a lightweight alternative to Splunk that I could actually spin up on a single VM without selling a kidney. Most of our team was drowning in raw syslog output and nobody had time to grep through auth.log at 2am when alerts fired. So I built this.
 
-It's a Flask-based dashboard that parses common log formats, runs basic threat detection rules, and shows you what's going on with some Chart.js visualizations. Not trying to replace a full SIEM — just trying to make log analysis less painful for small teams.
+It's a Flask-based dashboard that parses common log formats, runs basic threat detection rules, and shows you what's going on with some Chart.js visualizations. Not trying to replace a full SIEM - just trying to make log analysis less painful for small teams.
 
 ## What It Does
 
@@ -26,7 +26,7 @@ It's a Flask-based dashboard that parses common log formats, runs basic threat d
 | Brute Force | T1110 | >5 failed SSH from same IP |
 | Port Scan | T1046 | >20 unique ports from same IP |
 | Scanning Tools | T1595 | Known scanner user-agents (Nikto, sqlmap, etc.) |
-| Path Traversal | — | Access to sensitive paths (/.env, /wp-admin, etc.) |
+| Path Traversal | - | Access to sensitive paths (/.env, /wp-admin, etc.) |
 
 ## How to Run
 
@@ -90,10 +90,10 @@ pytest tests/ -v
 
 Things I want to add when I get around to it:
 
-- **SQLite persistence** — right now everything lives in memory, which is fine for demos but not great for anything serious
-- **Real-time tail mode** — watch a log file and stream new events to the dashboard via websockets
-- **Sigma rule support** — import community detection rules instead of hand-coding everything
+- **SQLite persistence** - right now everything lives in memory, which is fine for demos but not great for anything serious
+- **Real-time tail mode** - watch a log file and stream new events to the dashboard via websockets
+- **Sigma rule support** - import community detection rules instead of hand-coding everything
 
 ## License
 
-MIT — do whatever you want with it.
+MIT - do whatever you want with it.

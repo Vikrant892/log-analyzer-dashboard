@@ -58,9 +58,9 @@
             <tr class="alert-row severity-{{ alert.severity }}">
                 <td><span class="badge badge-{{ alert.severity }}">{{ alert.severity|upper }}</span></td>
                 <td>{{ alert.type }}</td>
-                <td class="mono">{{ alert.source_ip|default('—') }}</td>
+                <td class="mono">{{ alert.source_ip|default('-') }}</td>
                 <td>{{ alert.description }}</td>
-                <td class="mono">{{ alert.mitre|default('—') }}</td>
+                <td class="mono">{{ alert.mitre|default('-') }}</td>
             </tr>
             {% endfor %}
         </tbody>

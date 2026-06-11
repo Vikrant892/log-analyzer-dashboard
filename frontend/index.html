@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LogInsight — Log Intelligence Dashboard</title>
+<title>LogInsight - Log Intelligence Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -226,7 +226,7 @@ function analyze(){
   else{tc.innerHTML=threats.map(th=>'<div class="threat '+th.sev+'"><div class="head"><div class="nm">'+th.t+'</div><span class="lvl">'+(th.sev==='hi'?'HIGH':th.sev==='md'?'MED':'LOW')+'</span></div><div class="ts">'+th.time+'</div><div class="det">'+th.det+'</div><span class="mit">→ '+th.mit+'</span></div>').join('')}
 
   const tl=document.getElementById('timeline');
-  if(!threats.length){tl.innerHTML='<div style="padding:20px;color:var(--dim);text-align:center">— no events —</div>'}
+  if(!threats.length){tl.innerHTML='<div style="padding:20px;color:var(--dim);text-align:center">- no events -</div>'}
   else{tl.innerHTML=threats.map(th=>'<div class="tl-item '+th.sev+'"><div class="dot"></div><div class="t">'+th.time+'</div><div class="n">'+th.t+'</div><div class="d">'+th.det+'</div></div>').join('')}
   document.getElementById('tcount').textContent=threats.length+' event'+(threats.length===1?'':'s')+' · '+techs.size+' technique(s)';
 }

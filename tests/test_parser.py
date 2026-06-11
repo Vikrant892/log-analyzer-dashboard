@@ -111,7 +111,7 @@ Jan 15 08:23:02 webserver sshd[12042]: Failed password for root from 1.2.3.4 por
 
 
 class TestParseLogFile:
-    """integration test — parse a whole file"""
+    """integration test - parse a whole file"""
 
     def test_parse_auth_log_sample(self):
         sample_path = os.path.join(

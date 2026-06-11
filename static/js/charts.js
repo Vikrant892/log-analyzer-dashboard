@@ -1,7 +1,7 @@
 /*
  * chart.js visualizations for the dashboard
  * pulls data from the stats object injected by flask
- * nothing too clever — just bar charts and pie charts
+ * nothing too clever - just bar charts and pie charts
  */
 
 // color palette matching the dark theme
@@ -18,7 +18,7 @@ const COLORS = {
     indigo: '#6366f1',
 };
 
-// chart.js global defaults — dark theme friendly
+// chart.js global defaults - dark theme friendly
 Chart.defaults.color = '#8b949e';
 Chart.defaults.borderColor = '#30363d';
 Chart.defaults.font.family = "'Courier New', monospace";

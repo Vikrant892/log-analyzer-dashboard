@@ -7,7 +7,7 @@ from collections import defaultdict, Counter
 
 
 def get_top_ips(events, n=10):
-    """top N source IPs by event count — the usual suspects"""
+    """top N source IPs by event count - the usual suspects"""
     ip_counts = Counter()
     for evt in events:
         ip = evt.get('source_ip')
@@ -20,7 +20,7 @@ def get_top_ips(events, n=10):
 def get_events_by_hour(events):
     """
     group events by hour for the timeline chart
-    uses the raw timestamp string — not perfect but close enough
+    uses the raw timestamp string - not perfect but close enough
     parses common formats: syslog (Jan  5 14:00:00) and access log (10/Oct/2000:13:55:36)
     """
     hour_counts = defaultdict(int)
@@ -51,7 +51,7 @@ def get_events_by_hour(events):
 
 
 def get_severity_breakdown(events):
-    """count events by severity level — feeds the pie chart"""
+    """count events by severity level - feeds the pie chart"""
     counts = Counter()
     for evt in events:
         sev = evt.get('severity', 'info')
@@ -82,7 +82,7 @@ def get_alert_type_breakdown(alerts):
 
 def compute_stats(events, alerts):
     """
-    compute all stats at once — called after each upload
+    compute all stats at once - called after each upload
     returns a dict ready for jsonify
     """
     return {

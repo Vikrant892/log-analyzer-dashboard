@@ -1,6 +1,6 @@
 """
 threat detection engine
-nothing fancy — just pattern matching and thresholds
+nothing fancy - just pattern matching and thresholds
 but it catches the obvious stuff that matters
 
 detection rules loosely mapped to MITRE ATT&CK:
@@ -11,13 +11,11 @@ detection rules loosely mapped to MITRE ATT&CK:
 
 from collections import defaultdict
 
-# thresholds — tune these based on your environment
+# thresholds - tune these based on your environment
 BRUTE_FORCE_THRESHOLD = 5     # failed attempts from same IP
-BRUTE_FORCE_WINDOW = 60       # seconds (not really enforced yet, TODO)
 PORT_SCAN_THRESHOLD = 20      # unique ports from same IP
-PORT_SCAN_WINDOW = 30         # seconds (same TODO)
 
-# known malicious user agents — just the common scanners
+# known malicious user agents - just the common scanners
 # not comprehensive but catches the script kiddies
 SUSPICIOUS_USER_AGENTS = [
     'nikto',
@@ -55,7 +53,7 @@ SUSPICIOUS_PATHS = [
 
 def detect_brute_force(events):
     """
-    detect brute force attempts — mitre att&ck T1110
+    detect brute force attempts - mitre att&ck T1110
     groups failed ssh by source IP and flags if over threshold
     """
     failed_by_ip = defaultdict(list)
@@ -85,7 +83,7 @@ def detect_brute_force(events):
 
 def detect_port_scan(events):
     """
-    detect port scanning — mitre att&ck T1046
+    detect port scanning - mitre att&ck T1046
     looks for same IP hitting many different ports
     """
     ports_by_ip = defaultdict(set)
@@ -113,7 +111,7 @@ def detect_port_scan(events):
 
 def detect_suspicious_ua(events):
     """
-    flag requests from known scanning tools — T1595
+    flag requests from known scanning tools - T1595
     checks user-agent strings against known bad actors
     """
     alerts = []
@@ -181,7 +179,7 @@ def detect_threats(events):
     all_alerts.extend(detect_suspicious_ua(events))
     all_alerts.extend(detect_path_traversal(events))
 
-    # sort by severity — criticals first
+    # sort by severity - criticals first
     severity_order = {'critical': 0, 'high': 1, 'warning': 2, 'info': 3}
     all_alerts.sort(key=lambda a: severity_order.get(a.get('severity', 'info'), 99))
 

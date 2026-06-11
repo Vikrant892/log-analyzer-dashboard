@@ -82,7 +82,7 @@ def api_stats():
 
 @app.route('/api/upload', methods=['POST'])
 def api_upload():
-    """api endpoint for programmatic uploads — curl friendly"""
+    """api endpoint for programmatic uploads - curl friendly"""
     if 'logfile' not in request.files:
         return jsonify({'error': 'no file provided'}), 400
 
